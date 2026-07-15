@@ -309,6 +309,7 @@
           <li>Arduino &amp; ESP32 builds up to ROS2 / Jetson industrial systems</li>
         </ul>
         <div class="p-actions">
+          <a class="btn ghost" href="#intro-roboprompt">Intro</a>
           <a class="btn ghost" href="#demo-roboprompt">Demo</a>
           <a class="btn solid" href="https://robo-prompt.vercel.app/" target="_blank" rel="noopener">Try it ↗</a>
         </div>
@@ -326,6 +327,7 @@
           <li>Live telemetry, scoring tracker, playback, AI feedback</li>
         </ul>
         <div class="p-actions">
+          <a class="btn ghost" href="#intro-robolab">Intro</a>
           <a class="btn ghost" href="#demo-robolab">Demo</a>
           <a class="btn solid" href="https://gcet-gold.vercel.app/simulator" target="_blank" rel="noopener">Try it ↗</a>
         </div>
@@ -344,6 +346,116 @@
           <a class="member" href="#member-pearson"><span class="avatar">PW</span><h3>Pearson Wu</h3><span class="chev">›</span></a>
           <a class="member" href="#member-james"><span class="avatar">JY</span><h3>James Yang</h3><span class="chev">›</span></a>
           <a class="member" href="#member-bob67"><span class="avatar avatar-img"><img id="bob67-thumb" alt=""></span><h3>bob67</h3><span class="chev">›</span></a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ==================== INTRO: RoboPrompt ==================== -->
+  <div class="view" id="view-intro-arm" hidden>
+    <section class="demo arm">
+      <div class="wrap">
+        <a class="backlink" href="#home">← Back to home</a>
+        <div class="demo-head">
+          <div>
+            <p class="d-eyebrow">Intro · About the project</p>
+            <h2>What is RoboPrompt?</h2>
+            <p class="sub">An AI assistant for designing robotic arm control systems — from a single photo to architecture, code, and a test plan.</p>
+          </div>
+          <a class="btn solid narrow" href="https://robo-prompt.vercel.app/" target="_blank" rel="noopener">Try it ↗</a>
+        </div>
+
+        <div class="callout">
+          <span class="label">The idea</span>
+          <p>Snap a photo of any robotic arm, answer only the questions the photo can't, and get a working control plan for it.</p>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>The problem</h3>
+            <p>Most robot projects get the hardware moving, then stall at the control system — firmware, drivers, and interfaces. That's because the mechanical structure, hardware information, communication protocol, and code are usually disconnected.</p>
+            <p>Generic AI tools lack robotics context: they guess code instead of asking what your machine actually is.</p>
+          </div>
+          <div class="card">
+            <h3>The approach</h3>
+            <p>RoboPrompt refuses to guess. It identifies your hardware from the photo first — brand, joint count, motor type, structure — then asks for whatever is still missing before writing a single line of code.</p>
+            <p>The result is a plan that matches the machine in front of you: architecture, runnable code, wiring, and calibration.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Who it's for</h3>
+          <p>Anyone with a robotic arm and no control system yet — from hobbyists with a servo kit on an Arduino or ESP32, to teams running brushless-motor industrial arms on Jetson or ROS2. Available in English, Español, Français, and 中文.</p>
+        </div>
+
+        <div class="demo-foot">
+          <a class="btn ghost narrow" href="#demo-roboprompt">See the tutorial</a>
+          <a class="btn solid narrow" href="https://robo-prompt.vercel.app/" target="_blank" rel="noopener">Try it now ↗</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ==================== INTRO: FTC & DECODE ==================== -->
+  <div class="view" id="view-intro-sim" hidden>
+    <section class="demo sim">
+      <div class="wrap">
+        <a class="backlink" href="#home">← Back to home</a>
+        <div class="demo-head">
+          <div>
+            <p class="d-eyebrow">Intro · FIRST Tech Challenge</p>
+            <h2>FTC &amp; the DECODE game</h2>
+            <p class="sub">The competition RoboLab simulates — what FTC is, and how the 2025–2026 DECODE season is played.</p>
+          </div>
+          <a class="btn solid narrow" href="https://gcet-gold.vercel.app/simulator" target="_blank" rel="noopener">Try it ↗</a>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>What is FTC?</h3>
+            <p><strong>FIRST Tech Challenge</strong> is a global robotics competition for student teams who design, build, and program their own robots. Matches are played 2v2: a Red and a Blue alliance, each made of two teams working together. Every season brings a brand-new game — this year it's <strong>DECODE™ presented by RTX</strong>.</p>
+          </div>
+          <div class="card">
+            <h3>The DECODE game</h3>
+            <p>Alliances score purple and green <strong>ARTIFACTS</strong> in their GOAL, build <strong>PATTERNS</strong> on their RAMP, and race back to their <strong>BASE</strong> before time runs out. Just before each match, the OBELISK randomizes one of 3 <strong>MOTIFS</strong> — the color sequence (2 purple + 1 green) that robots try to match for bonus points.</p>
+          </div>
+        </div>
+
+        <div class="callout">
+          <span class="label">Match format · 2:30 total</span>
+          <p>30-second AUTO period → 8-second transition → 2-minute TELEOP period.</p>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>How a match plays</h3>
+            <ol class="steps">
+              <li><b>AUTO (0:30)</b><span>Robots run fully autonomously: use sensors to decode the motif, leave the launch line, and start scoring artifacts.</span></li>
+              <li><b>TELEOP (2:00)</b><span>Drivers take control. Robots collect and score artifacts; drive team members load artifacts from the loading zone.</span></li>
+              <li><b>Endgame</b><span>Build the motif pattern on the ramp and return both robots to base — the alliance with the most points wins.</span></li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Scoring at a glance</h3>
+            <div class="spec-scroll">
+              <table class="spec">
+                <tr><td class="k">Leave</td><td>3 pts — robot off the launch line at the end of AUTO.</td></tr>
+                <tr><td class="k">Classified</td><td>3 pts per artifact sorted correctly through the goal.</td></tr>
+                <tr><td class="k">Overflow</td><td>1 pt per extra artifact through the goal.</td></tr>
+                <tr><td class="k">Depot</td><td>1 pt per artifact in the depot (TELEOP).</td></tr>
+                <tr><td class="k">Pattern</td><td>2 pts per artifact matching the motif on the ramp.</td></tr>
+                <tr><td class="k">Base</td><td>5 pts partial / 10 pts full return; +10 bonus if both robots fully return.</td></tr>
+                <tr><td class="k">Ranking</td><td>Extra ranking points for winning and for hitting movement, goal, and pattern thresholds.</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <p style="color: var(--muted); font-size: 0.85rem; margin: 1.5rem 0 0;">Summarized from the official DECODE Competition Manual. RoboLab's scoring tracker uses these same values — classified artifacts are worth 3 points, overflow 1 point.</p>
+
+        <div class="demo-foot">
+          <a class="btn ghost narrow" href="#demo-robolab">See the tutorial</a>
+          <a class="btn solid narrow" href="https://gcet-gold.vercel.app/simulator" target="_blank" rel="noopener">Open the simulator ↗</a>
         </div>
       </div>
     </section>
@@ -498,6 +610,8 @@
       home: document.getElementById('view-home'),
       arm: document.getElementById('view-demo-arm'),
       sim: document.getElementById('view-demo-sim'),
+      introArm: document.getElementById('view-intro-arm'),
+      introSim: document.getElementById('view-intro-sim'),
       member: document.getElementById('view-member')
     };
 
@@ -560,6 +674,8 @@
       var key = 'home';
       if (h === '#demo-roboprompt') key = 'arm';
       else if (h === '#demo-robolab') key = 'sim';
+      else if (h === '#intro-roboprompt') key = 'introArm';
+      else if (h === '#intro-robolab') key = 'introSim';
       else if (h.indexOf('#member-') === 0 && members[h.slice(8)]) {
         key = 'member';
         showMember(h.slice(8));
