@@ -207,6 +207,10 @@
   }
   .card p { margin: 0; }
   .card p + p { margin-top: 0.7rem; }
+  .card ul.feats { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+  .card ul.feats li { font-size: 0.94rem; color: var(--muted); padding-left: 1.25rem; position: relative; }
+  .card ul.feats li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); }
+  .card ul.feats li strong { color: var(--ink); }
 
   .callout {
     background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 0 6px 6px 0;
@@ -403,21 +407,39 @@
         <a class="backlink" href="#home">← Back to home</a>
         <div class="demo-head">
           <div>
-            <p class="d-eyebrow">Intro · FIRST Tech Challenge</p>
-            <h2>FTC &amp; the DECODE game</h2>
-            <p class="sub">The competition RoboLab simulates — what FTC is, and how the 2025–2026 DECODE season is played.</p>
+            <p class="d-eyebrow">Intro · RoboLab &amp; FIRST Tech Challenge</p>
+            <h2>What is RoboLab for?</h2>
+            <p class="sub">What this simulator does, and how the real FTC competition works — in plain words.</p>
           </div>
           <a class="btn solid narrow" href="https://gcet-gold.vercel.app/" target="_blank" rel="noopener">Try it ↗</a>
         </div>
 
+        <div class="callout">
+          <span class="label">In one sentence</span>
+          <p>RoboLab is a free virtual FTC field: write robot code, run it, and see your score — no real robot needed.</p>
+        </div>
+
         <div class="grid2">
           <div class="card">
-            <h3>What is FTC?</h3>
-            <p><strong>FIRST Tech Challenge</strong> is a global robotics competition for student teams who design, build, and program their own robots. Matches are played 2v2: a Red and a Blue alliance, each made of two teams working together. Every season brings a brand-new game — this year it's <strong>DECODE™ presented by RTX</strong>.</p>
+            <h3>What you can do with it</h3>
+            <ul class="feats">
+              <li>Run <strong>Autonomous</strong> and <strong>TeleOp</strong> code on a 3D DECODE field</li>
+              <li>Pick a robot preset, alliance color, and start position</li>
+              <li>Watch <strong>live telemetry</strong> while your robot drives</li>
+              <li>See your <strong>score</strong> counted with real DECODE point values</li>
+              <li>Replay runs and get <strong>AI feedback</strong> to fix your code</li>
+              <li>Choose <strong>Sandbox</strong> (everything unlocked) or <strong>Learning Mode</strong> (step-by-step levels)</li>
+            </ul>
           </div>
-          <div class="card">
-            <h3>The DECODE game</h3>
-            <p>Alliances score purple and green <strong>ARTIFACTS</strong> in their GOAL, build <strong>PATTERNS</strong> on their RAMP, and race back to their <strong>BASE</strong> before time runs out. Just before each match, the OBELISK randomizes one of 3 <strong>MOTIFS</strong> — the color sequence (2 purple + 1 green) that robots try to match for bonus points.</p>
+          <div>
+            <div class="card" style="margin-bottom: 1.25rem;">
+              <h3>What is FTC?</h3>
+              <p><strong>FIRST Tech Challenge</strong> is a worldwide robotics competition for students. Teams build and program their own robot, then compete 2v2 — a Red and a Blue alliance, two teams each. Every season is a new game; this year's is <strong>DECODE™</strong>.</p>
+            </div>
+            <div class="card">
+              <h3>The DECODE game</h3>
+              <p>Score purple and green <strong>artifacts</strong> in your goal, build the randomized 2-purple-1-green <strong>motif pattern</strong> on your ramp, and get both robots back to <strong>base</strong> before time runs out. Most points wins.</p>
+            </div>
           </div>
         </div>
 
@@ -451,7 +473,7 @@
           </div>
         </div>
 
-        <p style="color: var(--muted); font-size: 0.85rem; margin: 1.5rem 0 0;">Summarized from the official DECODE Competition Manual. RoboLab's scoring tracker uses these same values — classified artifacts are worth 3 points, overflow 1 point.</p>
+        <p style="color: var(--muted); font-size: 0.85rem; margin: 1.5rem 0 0;">Rules summarized from the official DECODE Competition Manual — RoboLab scores with these same values.</p>
 
         <div class="demo-foot">
           <a class="btn ghost narrow" href="#demo-robolab">See the tutorial</a>
