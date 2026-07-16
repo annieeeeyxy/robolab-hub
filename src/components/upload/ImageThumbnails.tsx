@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslation } from "@/hooks/useTranslation";
+
 export function ImageThumbnails({
   urls,
   onRemove,
@@ -7,6 +11,7 @@ export function ImageThumbnails({
   onRemove?: (index: number) => void;
   disabled?: boolean;
 }) {
+  const { t } = useTranslation();
   if (urls.length === 0) return null;
 
   return (
@@ -16,7 +21,7 @@ export function ImageThumbnails({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={url}
-            alt={`Uploaded robot arm photo ${i + 1}`}
+            alt={t("uploadedPhotoAlt", { number: i + 1 })}
             className="h-full w-full rounded-xl border border-black/10 object-cover dark:border-white/10"
           />
           {onRemove && (
@@ -24,7 +29,7 @@ export function ImageThumbnails({
               type="button"
               onClick={() => onRemove(i)}
               disabled={disabled}
-              aria-label="Remove photo"
+              aria-label={t("removePhoto")}
               className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-0 dark:bg-white/80 dark:text-black"
             >
               ×

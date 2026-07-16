@@ -595,7 +595,8 @@ export default function SimulatorDashboard() {
 
   useEffect(() => {
     const nextDefaultGoal = getHubTranslation(language, "ftcDefaultGoal") ?? defaultGoal;
-    setGoal((current) => current === previousDefaultGoal.current ? nextDefaultGoal : current);
+    const priorDefaultGoal = previousDefaultGoal.current;
+    setGoal((current) => current === priorDefaultGoal ? nextDefaultGoal : current);
     previousDefaultGoal.current = nextDefaultGoal;
   }, [language]);
 
@@ -755,7 +756,7 @@ export default function SimulatorDashboard() {
       setIndex(0);
       setHasRun(false);
       setAnalysis(null);
-      setSetupWarning("Invalid start position");
+      setSetupWarning(t("ftcInvalidStartPosition"));
       return;
     }
 
@@ -785,7 +786,7 @@ export default function SimulatorDashboard() {
 
     const selectedRobot = robotPresets.find((robot) => robot.id === robotId);
     if (!selectedRobot) {
-      setSetupWarning("Robot configuration is missing");
+      setSetupWarning(t("ftcRobotConfigurationMissing"));
       return;
     }
 
@@ -819,28 +820,25 @@ export default function SimulatorDashboard() {
         const result: unknown = await response.json();
 
         if (!response.ok) {
-          const message = typeof result === "object" && result && "error" in result && typeof result.error === "string"
-            ? result.error
-            : "AI analysis request failed.";
-          throw new Error(message);
+          throw new Error(t("ftcAiRequestFailed"));
         }
 
         if (!isAIFeedback(result)) {
-          throw new Error("AI response format was invalid.");
+          throw new Error(t("ftcAiResponseInvalid"));
         }
 
         setAnalysis(result);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message = error instanceof Error ? error.message : t("ftcUnknownError");
         setAnalysis({
-          headline: "AI analysis unavailable",
+          headline: t("ftcAiUnavailable"),
           status: "warning",
-          happened: "The simulator generated telemetry, but the AI service could not return a valid analysis.",
+          happened: t("ftcAiUnavailableHappened"),
           cause: message,
-          evidence: ["Goal, code, robot setup, and recent telemetry were prepared", "No usable AI feedback object was returned"],
-          fix: "Check OPENAI_API_KEY and OPENAI_MODEL configuration, then retry analysis.",
-          optimization: "Reduce prompt size by shortening code or telemetry if provider limits are hit.",
-          concept: "The analyzer requires a live model endpoint and a valid structured JSON response.",
+          evidence: [t("ftcAiUnavailableEvidenceOne"), t("ftcAiUnavailableEvidenceTwo")],
+          fix: t("ftcAiUnavailableFix"),
+          optimization: t("ftcAiUnavailableOptimization"),
+          concept: t("ftcAiUnavailableConcept"),
         });
       } finally {
         setAnalyzing(false);
@@ -857,7 +855,7 @@ export default function SimulatorDashboard() {
     <main className="sim-shell ftc-surface">
       <header className="sim-nav">
         <Link href="/ftc/" className="brand"><span className="brand-mark">R</span><span>RoboLab <b>FTC</b></span></Link>
-        <div className="sim-title"><span>{t("ftcSimulationLabel")}</span><i />{robotPresets.find((robot) => robot.id === robotId)?.name}</div>
+        <div className="sim-title"><span>{t("ftcSimulationLabel")}</span><i />{t(robotPresets.find((robot) => robot.id === robotId)?.nameKey ?? "ftcTurretShooter")}</div>
         <div className="sim-nav-right"><span><i className="live-dot" />{t("ftcSimulationReady")}</span><Link href="/ftc/">{t("ftcExitLab")}</Link></div>
       </header>
       <section className={`lab-guide ${experienceLevel}`}>

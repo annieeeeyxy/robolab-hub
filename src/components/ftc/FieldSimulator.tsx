@@ -100,7 +100,7 @@ export function FieldSimulator({
               <span>{running ? t("ftcPause") : t("ftcPlay")}</span>
             </button>
             <input
-              aria-label="Simulation timeline"
+              aria-label={t("ftcTimelineAria")}
               type="range"
               min="0"
               max={totalFrames - 1}

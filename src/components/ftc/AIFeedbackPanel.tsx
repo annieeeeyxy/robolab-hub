@@ -18,24 +18,24 @@ export function AIFeedbackPanel({ data, goal }: { data: AIFeedback | null; goal:
     );
   }
 
-  const report = `ROBOLAB FTC SIMULATION REPORT
-Goal: ${goal}
+  const report = `${t("ftcSimulationReport")}
+${t("ftcRobotGoal")}: ${goal}
 
 ${data.headline}
 
-WHAT HAPPENED
+${t("ftcWhatHappened")}
 ${data.happened}
 
-LIKELY CAUSE
+${t("ftcLikelyCause")}
 ${data.cause}
 
-EVIDENCE
+${t("ftcEvidence")}
 - ${data.evidence.join("\n- ")}
 
-SUGGESTED FIX
+${t("ftcSuggestedFix")}
 ${data.fix}
 
-OPTIMIZATION
+${t("ftcOptimization")}
 ${data.optimization}`;
 
   const copy = async () => {

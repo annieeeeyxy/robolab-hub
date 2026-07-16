@@ -6,38 +6,65 @@ type TelemetryItemId = "position" | "heading" | "drivePower" | "encoders" | "pro
 
 type TelemetryOption = {
   id: TelemetryItemId;
-  label: string;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
 };
 
 const telemetryOptions: TelemetryOption[] = [
-  { id: "position", label: "Position", description: "X / Y field coordinates" },
-  { id: "heading", label: "Heading", description: "Field-relative robot angle" },
-  { id: "drivePower", label: "Drive power", description: "Left and right command output" },
-  { id: "encoders", label: "Encoders", description: "Left and right drivetrain ticks" },
-  { id: "progress", label: "Run progress", description: "Simulation completion percentage" },
-  { id: "launcher", label: "Launcher", description: "Shooter RPM and target" },
-  { id: "arm", label: "Arm", description: "Arm position and target" },
-  { id: "intake", label: "Intake", description: "Roller direction state" },
-  { id: "events", label: "Events", description: "Warnings and run markers" },
+  { id: "position", labelKey: "ftcPosition", descriptionKey: "ftcPositionDescription" },
+  { id: "heading", labelKey: "ftcHeading", descriptionKey: "ftcHeadingDescription" },
+  { id: "drivePower", labelKey: "ftcDrivePower", descriptionKey: "ftcDrivePowerDescription" },
+  { id: "encoders", labelKey: "ftcEncoders", descriptionKey: "ftcEncodersDescription" },
+  { id: "progress", labelKey: "ftcRunProgress", descriptionKey: "ftcRunProgressDescription" },
+  { id: "launcher", labelKey: "ftcLauncher", descriptionKey: "ftcLauncherDescription" },
+  { id: "arm", labelKey: "ftcArm", descriptionKey: "ftcArmDescription" },
+  { id: "intake", labelKey: "ftcIntake", descriptionKey: "ftcIntakeDescription" },
+  { id: "events", labelKey: "ftcEvents", descriptionKey: "ftcEventsDescription" },
 ];
+
+type Translate = (key: string, values?: Record<string, string | number>) => string;
+
+function localizeTelemetryMessage(message: string | undefined, t: Translate) {
+  if (!message) return "";
+  const exactMessages: Record<string, string> = {
+    Ready: t("ftcReadyEvent"),
+    "Objects settled": t("ftcObjectsSettled"),
+    "No supported robot code actions parsed": t("ftcNoActionsParsed"),
+    "No artifact loaded to shoot": t("ftcNoArtifactLoaded"),
+    "controlled 4 artifacts": t("ftcControlledFourArtifacts"),
+    "Invalid start position": t("ftcInvalidStartPosition"),
+  };
+  if (exactMessages[message]) return exactMessages[message];
+
+  const collected = message.match(/^(.*); collected artifact (\d+)$/);
+  if (collected) {
+    return `${collected[1]}; ${t("ftcCollectedArtifact", { count: collected[2] })}`;
+  }
+  const controlled = message.match(/^(.*); controlled 4 artifacts$/);
+  if (controlled) {
+    return `${controlled[1]}; ${t("ftcControlledFourArtifacts")}`;
+  }
+  return message;
+}
 
 function Metric({
   label,
   value,
   detail,
   accent,
+  removeAria,
   onRemove,
 }: {
   label: string;
   value: string;
   detail?: string;
   accent?: string;
+  removeAria: string;
   onRemove: () => void;
 }) {
   return (
     <div className="metric telemetry-item">
-      <button type="button" className="telemetry-remove" aria-label={`Remove ${label} telemetry`} onClick={onRemove}>x</button>
+      <button type="button" className="telemetry-remove" aria-label={removeAria} onClick={onRemove}>x</button>
       <span>{label}</span>
       <strong className={accent}>{value}</strong>
       {detail && <small>{detail}</small>}
@@ -49,14 +76,14 @@ function EventsSection({ events, onRemove }: { events: TelemetryFrame[]; onRemov
   const { t } = useTranslation();
   return (
     <div className="event-section telemetry-item telemetry-events">
-      <button type="button" className="telemetry-remove" aria-label="Remove events telemetry" onClick={onRemove}>x</button>
+      <button type="button" className="telemetry-remove" aria-label={t("ftcRemoveTelemetry", { label: t("ftcEvents") })} onClick={onRemove}>x</button>
       <div className="event-title"><span>{t("ftcEvents")}</span><b>{events.length}</b></div>
       <div className="event-log">
         {events.length ? events.slice(-4).reverse().map((event, index) => (
           <div key={`${event.time}-${index}`} className={event.warning ? "warning-event" : "normal-event"}>
             <time>{event.time.toFixed(2)}s</time>
             <i>{event.warning ? "!" : "*"}</i>
-            <span>{event.warning || event.event}</span>
+            <span>{localizeTelemetryMessage(event.warning || event.event, t)}</span>
           </div>
         )) : <div className="empty-event">{t("ftcEventsEmpty")}</div>}
       </div>
@@ -69,14 +96,12 @@ function displayPosition(frame: TelemetryFrame, coordinateSystem: CoordinateSyst
     return {
       x: frame.x - 72,
       y: 72 - frame.y,
-      detail: "Center-origin X / Y inches",
     };
   }
 
   return {
     x: frame.x,
     y: 144 - frame.y,
-    detail: "Corner-origin X / Y inches",
   };
 }
 
@@ -105,52 +130,52 @@ export function TelemetryPanel({ frame, events, progress, coordinateSystem }: { 
 
     const props = {
       position: {
-        label: "Position",
+        label: t("ftcPosition"),
         value: `${position.x.toFixed(1)}, ${position.y.toFixed(1)}`,
-        detail: position.detail,
+        detail: coordinateSystem === "center" ? t("ftcCenterPositionDetail") : t("ftcCornerPositionDetail"),
       },
       heading: {
-        label: "Heading",
+        label: t("ftcHeading"),
         value: `${frame.heading.toFixed(1)} deg`,
-        detail: "Field relative",
+        detail: t("ftcFieldRelative"),
         accent: Math.abs(frame.heading) > 8 ? "warn" : "",
       },
       drivePower: {
-        label: "Drive power",
+        label: t("ftcDrivePower"),
         value: `${frame.leftPower.toFixed(2)} / ${frame.rightPower.toFixed(2)}`,
-        detail: "Left / right",
+        detail: t("ftcLeftRight"),
       },
       encoders: {
-        label: "Encoders",
+        label: t("ftcEncoders"),
         value: `${Math.round(frame.leftEncoder)} / ${Math.round(frame.rightEncoder)}`,
-        detail: "Left / right ticks",
+        detail: t("ftcLeftRightTicks"),
       },
       progress: {
-        label: "Run progress",
+        label: t("ftcRunProgress"),
         value: `${Math.round(progress)}%`,
-        detail: "Simulation completion",
+        detail: t("ftcSimulationCompletion"),
       },
       launcher: {
-        label: "Launcher",
-        value: frame.shooterTarget > 0 ? `${Math.round(frame.shooterRpm).toLocaleString()} RPM` : "Idle",
-        detail: frame.shooterTarget > 0 ? `Target ${frame.shooterTarget.toLocaleString()} RPM` : "No target set",
+        label: t("ftcLauncher"),
+        value: frame.shooterTarget > 0 ? `${Math.round(frame.shooterRpm).toLocaleString()} RPM` : t("ftcIdle"),
+        detail: frame.shooterTarget > 0 ? t("ftcTargetRpm", { value: frame.shooterTarget.toLocaleString() }) : t("ftcNoTargetSet"),
         accent: frame.feeder && frame.shooterRpm < frame.shooterTarget * 0.95 ? "warn" : "",
       },
       arm: {
-        label: "Arm",
-        value: frame.armTarget > 0 ? `${Math.round(frame.armPosition).toLocaleString()} ticks` : "Idle",
-        detail: frame.armTarget > 0 ? `Target ${frame.armTarget.toLocaleString()} ticks` : "No target set",
+        label: t("ftcArm"),
+        value: frame.armTarget > 0 ? t("ftcTicks", { value: Math.round(frame.armPosition).toLocaleString() }) : t("ftcIdle"),
+        detail: frame.armTarget > 0 ? t("ftcTargetTicks", { value: frame.armTarget.toLocaleString() }) : t("ftcNoTargetSet"),
         accent: frame.armPosition > 1400 ? "warn" : "",
       },
       intake: {
-        label: "Intake",
-        value: frame.intake === "in" ? "Collecting" : frame.intake === "out" ? "Reversed" : "Off",
-        detail: `${frame.artifactCount}/3 artifacts stored`,
+        label: t("ftcIntake"),
+        value: frame.intake === "in" ? t("ftcCollecting") : frame.intake === "out" ? t("ftcReversed") : t("ftcOff"),
+        detail: t("ftcArtifactsStored", { count: frame.artifactCount }),
         accent: frame.intake === "out" ? "warn" : "",
       },
     }[id];
 
-    return <Metric key={id} {...props} onRemove={() => removeTelemetry(id)} />;
+    return <Metric key={id} {...props} removeAria={t("ftcRemoveTelemetry", { label: props.label })} onRemove={() => removeTelemetry(id)} />;
   };
 
   return (
@@ -167,8 +192,8 @@ export function TelemetryPanel({ frame, events, progress, coordinateSystem }: { 
             <div className="telemetry-add-menu">
               {availableTelemetry.length ? availableTelemetry.map((option) => (
                 <button key={option.id} type="button" onClick={() => addTelemetry(option.id)}>
-                  <span>{option.label}</span>
-                  <small>{option.description}</small>
+                  <span>{t(option.labelKey)}</span>
+                  <small>{t(option.descriptionKey)}</small>
                 </button>
               )) : <p>{t("ftcAllTelemetry")}</p>}
             </div>

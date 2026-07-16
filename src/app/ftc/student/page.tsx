@@ -77,7 +77,7 @@ export default function StudentDashboard() {
               <div key={idx} className="flex items-center justify-between p-4 bg-emerald-50 rounded-lg border border-emerald-200">
                 <div className="flex-1">
                   <p className="font-semibold text-black">{session.type}</p>
-                  <p className="text-sm text-black">{session.date} at {session.time}</p>
+                  <p className="text-sm text-black">{session.date} {t('ftcAt')} {session.time}</p>
                   <p className="text-xs text-black mt-1">{t('ftcLedBy', { coach: session.coach })}</p>
                 </div>
                 <button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">

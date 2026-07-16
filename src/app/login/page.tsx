@@ -2,9 +2,11 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslation } from "@/hooks/useTranslation";
 import { normalizeInternalRedirect } from "@/lib/redirect";
 
 function LoginForm() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
@@ -22,14 +24,13 @@ function LoginForm() {
         body: JSON.stringify({ password }),
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.error ?? "Incorrect password");
+        throw new Error(res.status === 401 ? t("loginIncorrectPassword") : t("loginSomethingWentWrong"));
       }
       const redirect = normalizeInternalRedirect(searchParams.get("redirect"), "/roboprompt/try");
       router.push(redirect);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : t("loginSomethingWentWrong"));
     } finally {
       setLoading(false);
     }
@@ -38,9 +39,9 @@ function LoginForm() {
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-4 py-16">
       <div className="text-center">
-        <h1 className="text-xl font-semibold">Enter password</h1>
+        <h1 className="text-xl font-semibold">{t("loginTitle")}</h1>
         <p className="mt-1 text-sm text-black/50 dark:text-white/50">
-          This page uses API credits — access is limited.
+          {t("loginDescription")}
         </p>
       </div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -48,7 +49,7 @@ function LoginForm() {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
+          placeholder={t("loginPasswordPlaceholder")}
           autoFocus
           className="w-full rounded-xl border border-black/15 bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-pink-500 dark:border-white/15"
         />
@@ -58,7 +59,7 @@ function LoginForm() {
           disabled={loading || !password}
           className="rounded-full bg-pink-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-pink-500 disabled:opacity-40"
         >
-          {loading ? "Checking…" : "Continue"}
+          {loading ? t("loginChecking") : t("loginContinue")}
         </button>
       </form>
     </main>

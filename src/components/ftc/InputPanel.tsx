@@ -3,15 +3,15 @@ import { robotPresets, RobotPresetId } from "@/lib/ftc/robots";
 import { ArtifactRowId, CoordinateSystem } from "@/lib/ftc/types";
 import { useTranslation } from "@/hooks/useTranslation";
 
-const artifactRowOptions: { id: ArtifactRowId; label: string }[] = [
-  { id: "topLoading", label: "Blue Loading Zone" },
-  { id: "topRight", label: "Blue 1" },
-  { id: "topCenter", label: "Blue 2" },
-  { id: "topLeft", label: "Blue 3" },
-  { id: "bottomLoading", label: "Red Loading Zone" },
-  { id: "bottomRight", label: "Red 1" },
-  { id: "bottomCenter", label: "Red 2" },
-  { id: "bottomLeft", label: "Red 3" },
+const artifactRowOptions: { id: ArtifactRowId; labelKey: string; number?: number }[] = [
+  { id: "topLoading", labelKey: "ftcBlueLoadingZone" },
+  { id: "topRight", labelKey: "ftcBlueRow", number: 1 },
+  { id: "topCenter", labelKey: "ftcBlueRow", number: 2 },
+  { id: "topLeft", labelKey: "ftcBlueRow", number: 3 },
+  { id: "bottomLoading", labelKey: "ftcRedLoadingZone" },
+  { id: "bottomRight", labelKey: "ftcRedRow", number: 1 },
+  { id: "bottomCenter", labelKey: "ftcRedRow", number: 2 },
+  { id: "bottomLeft", labelKey: "ftcRedRow", number: 3 },
 ];
 
 type InputPanelProps = {
@@ -139,8 +139,8 @@ export function InputPanel({
   const selectedRobot = robotPresets.find((robot) => robot.id === robotId);
   const [showArtifactRows, setShowArtifactRows] = useState(false);
   const coordinateBounds = coordinateSystem === "center"
-    ? { min: -72, max: 72, detail: "Center origin" }
-    : { min: 0, max: 144, detail: "Corner origin" };
+    ? { min: -72, max: 72, detail: t("ftcCenterOrigin") }
+    : { min: 0, max: 144, detail: t("ftcCornerOrigin") };
 
   return (
     <aside className="input-panel panel">
@@ -176,14 +176,14 @@ export function InputPanel({
         <div className="select-wrap robot-select">
           <select value={robotId} onChange={(event) => onRobot(event.target.value as RobotPresetId)}>
             {robotPresets.map((robot) => (
-              <option key={robot.id} value={robot.id}>{robot.name}</option>
+              <option key={robot.id} value={robot.id}>{t(robot.nameKey)}</option>
             ))}
           </select>
           <span>v</span>
         </div>
         <div className={`preset-summary ${selectedRobot?.accent}`}>
           <i />
-          <span>{selectedRobot?.description}</span>
+          <span>{selectedRobot ? t(selectedRobot.descriptionKey) : ""}</span>
         </div>
         <button type="button" className="cad-button" disabled><span>+</span> {t("ftcImportCad")} <small>{t("ftcComingLater")}</small></button>
       </section>}
@@ -198,24 +198,24 @@ export function InputPanel({
         <div className="dimension-controls start-pose-controls">
           <label>
             <span>X</span>
-            <NumberDraftInput ariaLabel="Robot start X position" min={coordinateBounds.min} max={coordinateBounds.max} value={startX} unit="in" onCommit={setStartX} />
+            <NumberDraftInput ariaLabel={t("ftcRobotStartXAria")} min={coordinateBounds.min} max={coordinateBounds.max} value={startX} unit="in" onCommit={setStartX} />
           </label>
           <label>
             <span>Y</span>
-            <NumberDraftInput ariaLabel="Robot start Y position" min={coordinateBounds.min} max={coordinateBounds.max} value={startY} unit="in" onCommit={setStartY} />
+            <NumberDraftInput ariaLabel={t("ftcRobotStartYAria")} min={coordinateBounds.min} max={coordinateBounds.max} value={startY} unit="in" onCommit={setStartY} />
           </label>
           <label>
             <span>{t("ftcHeading")}</span>
-            <NumberDraftInput ariaLabel="Robot start heading" min={0} max={360} value={startHeading} unit="deg" onCommit={setStartHeading} />
+            <NumberDraftInput ariaLabel={t("ftcRobotStartHeadingAria")} min={0} max={360} value={startHeading} unit="deg" onCommit={setStartHeading} />
           </label>
         </div>
-        <p className="dimension-note"><span>{coordinateBounds.detail}</span> coordinates shown in inches.</p>
+        <p className="dimension-note">{t("ftcCoordinatesShown", { origin: coordinateBounds.detail })}</p>
 
         <div className="field-config-subtitle">{t("ftcCoordinateSystem")}</div>
         <div className="select-wrap coordinate-system-select">
           <select value={coordinateSystem} onChange={(event) => setCoordinateSystem(event.target.value as CoordinateSystem)}>
-            <option value="corner">Corner origin - 0,0 at bottom left field corner</option>
-            <option value="center">Center origin - 0,0 at field center</option>
+            <option value="corner">{t("ftcCornerOriginOption")}</option>
+            <option value="center">{t("ftcCenterOriginOption")}</option>
           </select>
           <span>v</span>
         </div>
@@ -252,7 +252,7 @@ export function InputPanel({
                     setSelectedArtifactRows(selectedArtifactRows.filter((id) => id !== option.id));
                   }}
                 />
-                <span>{option.label}</span>
+                <span>{t(option.labelKey, option.number ? { number: option.number } : undefined)}</span>
               </label>
             ))}
           </div>

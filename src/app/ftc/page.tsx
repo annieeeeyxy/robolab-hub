@@ -35,7 +35,7 @@ export default function FtcLandingPage() {
           <div className="mission-preview">
             <div className="mission-copy"><small>{t("ftcYourGoal")}</small><strong>{t("ftcPreviewGoal")}</strong><p>{t("ftcPreviewHelp")}</p></div>
             <div className="mini-code"><span>1</span><code>driveForward(<b>24</b>);</code><span>2</span><code>driveLeft(<b>12</b>);</code></div>
-            <div className="mini-stage"><div className="stage-grid" /><div className="start-flag">START</div><div className="finish-flag">GOAL</div><svg viewBox="0 0 300 130" aria-hidden="true"><path d="M62 100 C100 100 126 84 152 65 S210 38 247 38" /></svg><div className="tiny-robot">↑<b>BOT</b></div></div>
+            <div className="mini-stage"><div className="stage-grid" /><div className="start-flag">{t("ftcStartFlag")}</div><div className="finish-flag">{t("ftcGoalFlag")}</div><svg viewBox="0 0 300 130" aria-hidden="true"><path d="M62 100 C100 100 126 84 152 65 S210 38 247 38" /></svg><div className="tiny-robot">↑<b>{t("ftcBot")}</b></div></div>
             <div className="preview-run"><span><i /> {t("ftcReadySimulate")}</span><strong>▶ {t("ftcRunMission")}</strong></div>
           </div>
         </div>
