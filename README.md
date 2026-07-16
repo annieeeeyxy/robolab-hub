@@ -1,24 +1,66 @@
-# Robotics Workbench
+# RoboLab Hub
 
-**Live site: https://robolab-hub.vercel.app**
+RoboLab Hub is a single Next.js application containing two robotics products:
 
-A landing hub that brings two robotics projects together:
+- **RoboPrompt** (`/roboprompt`) turns robot-arm photos into targeted hardware questions, control plans, and downloadable starter code.
+- **RoboLab FTC** (`/ftc`) provides a 3D FTC simulator, telemetry, learning paths, and AI-assisted run analysis.
 
-- **[RoboPrompt](https://robo-prompt.vercel.app/)** — an AI assistant that turns a photo of a robotic arm into a working control plan (architecture, runnable code, wiring, and calibration).
-- **[RoboLab FTC](https://gcet-gold.vercel.app/simulator)** — a virtual FIRST Tech Challenge laboratory: simulate robot code on the 2025–2026 DECODE field with live telemetry, scoring, and AI feedback.
+The Hub owns the product navigation and language preference. English, Spanish,
+French, and Simplified Chinese are shared across the Hub, RoboPrompt, and
+RoboLab FTC. The selected language is saved in the browser and also controls the
+language used for AI-generated RoboPrompt documents and FTC feedback.
 
-The hub introduces both projects (each with an in-site demo/tutorial page), links out to the live tools, and includes member profile pages for the team.
+## Requirements
 
-## Tech
+- Node.js 22+
+- pnpm 10+
 
-A single self-contained `index.html` — no build step, no dependencies. Inline CSS and vanilla JS with hash-based routing (`#demo-roboprompt`, `#demo-robolab`, `#member-…`). Dark theme matching the two source sites: black + pink for RoboPrompt, black + blue for RoboLab FTC.
+## Environment
 
-## Develop
+Copy `.env.example` to `.env.local` and configure the providers you use:
 
-Open `index.html` in a browser. That's it.
-
-## Deploy
+- `ANTHROPIC_API_KEY`: RoboPrompt image analysis, interviews, plans, and code generation
+- `OPENAI_API_KEY`: RoboLab FTC telemetry analysis
+- `OPENAI_MODEL`: optional FTC analysis model override
+- `SITE_PASSWORD`: required in production to protect RoboPrompt's paid API routes
 
 ```bash
-vercel --prod
+cp .env.example .env.local
 ```
+
+## Development
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Open `http://localhost:3000`.
+
+## Quality checks
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build
+```
+
+The optional native dependencies in `package.json` keep the Three.js/Tailwind/
+Next.js build reproducible on Apple Silicon development machines and Linux
+deployment environments.
+
+## Main routes
+
+- `/`: Hub product chooser
+- `/roboprompt`: RoboPrompt overview
+- `/roboprompt/try`: photo-to-control-plan workflow
+- `/ftc`: FTC learning paths
+- `/ftc/simulator`: interactive simulator and telemetry
+- `/ftc/coach`: coach dashboard
+- `/ftc/student`: team-member dashboard
+
+## Deployment
+
+The primary target is Vercel. Import the repository, add the environment
+variables above, and deploy as a standard Next.js App Router application.
