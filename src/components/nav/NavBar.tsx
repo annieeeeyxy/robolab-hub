@@ -21,16 +21,7 @@ export function NavBar() {
         { href: "/roboprompt/diary", label: t("diary") },
         { href: "https://robo-prompt.vercel.app/", label: t("tryIt"), external: true },
       ]
-    : isFtc
-      ? [
-          { href: "/ftc", label: t("overview") },
-          { href: "/ftc/intro", label: t("navIntro") },
-          { href: "/ftc/tutorial", label: t("navTutorial") },
-          { href: "/ftc/simulator?level=beginner", label: t("simulator") },
-          { href: "https://gcet-gold.vercel.app/", label: t("navStart"), external: true },
-          { href: "/ftc/student", label: t("teamMember") },
-        ]
-      : [];
+    : [];
 
   return (
     <header className="relative z-50 border-b border-white/10 bg-[#080b10]/95 text-white backdrop-blur-xl">
