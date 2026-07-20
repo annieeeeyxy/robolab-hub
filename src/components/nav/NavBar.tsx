@@ -15,6 +15,7 @@ export function NavBar() {
     ? [
         { href: "/roboprompt", label: t("overview") },
         { href: "/roboprompt/about", label: t("about") },
+        { href: "/roboprompt/tutorial", label: t("navTutorial") },
         { href: "/roboprompt/members", label: t("members") },
         { href: "/roboprompt/diary", label: t("diary") },
         { href: "/roboprompt/try", label: t("tryIt") },
@@ -22,6 +23,8 @@ export function NavBar() {
     : isFtc
       ? [
           { href: "/ftc", label: t("overview") },
+          { href: "/ftc/intro", label: t("navIntro") },
+          { href: "/ftc/tutorial", label: t("navTutorial") },
           { href: "/ftc/simulator?level=beginner", label: t("simulator") },
           { href: "/ftc/coach", label: t("coach") },
           { href: "/ftc/student", label: t("teamMember") },
