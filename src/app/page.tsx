@@ -37,7 +37,8 @@ export default function HubHome() {
       features: [t("hpFeat1"), t("hpFeat2"), t("hpFeat3")],
       intro: "/roboprompt/about",
       demo: "/roboprompt/tutorial",
-      tryIt: "/roboprompt/try",
+      tryIt: "https://robo-prompt.vercel.app/",
+      external: true,
     },
     {
       id: "ftc" as const,

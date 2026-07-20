@@ -20,9 +20,9 @@ export default function RoboPromptTutorialPage() {
             <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">{t("trTitle")}</h1>
             <p className="mt-4 text-white/60">{t("trLead")}</p>
           </div>
-          <Link href="/roboprompt/try" className="rounded-lg bg-pink-400 px-5 py-3 font-semibold text-[#200812] transition-colors hover:bg-pink-300">
-            {t("trTry")} →
-          </Link>
+          <a href="https://robo-prompt.vercel.app/" target="_blank" rel="noopener noreferrer" className="rounded-lg bg-pink-400 px-5 py-3 font-semibold text-[#200812] transition-colors hover:bg-pink-300">
+            {t("trTry")} ↗
+          </a>
         </div>
 
         <div className="mt-10 rounded-r-2xl border-l-4 border-pink-400 bg-pink-400/10 p-6">
@@ -62,9 +62,9 @@ export default function RoboPromptTutorialPage() {
         </div>
 
         <div className="mt-10 flex flex-wrap gap-3">
-          <Link href="/roboprompt/try" className="rounded-lg bg-pink-400 px-5 py-3 font-semibold text-[#200812] transition-colors hover:bg-pink-300">
-            {t("trTry")} →
-          </Link>
+          <a href="https://robo-prompt.vercel.app/" target="_blank" rel="noopener noreferrer" className="rounded-lg bg-pink-400 px-5 py-3 font-semibold text-[#200812] transition-colors hover:bg-pink-300">
+            {t("trTry")} ↗
+          </a>
           <Link href="/roboprompt/about" className="rounded-lg border border-pink-400/40 px-5 py-3 font-semibold text-pink-300 transition-colors hover:bg-pink-400/10">
             {t("about")}
           </Link>

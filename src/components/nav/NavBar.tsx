@@ -19,7 +19,7 @@ export function NavBar() {
         { href: "/roboprompt/tutorial", label: t("navTutorial") },
         { href: "/roboprompt/members", label: t("members") },
         { href: "/roboprompt/diary", label: t("diary") },
-        { href: "/roboprompt/try", label: t("tryIt") },
+        { href: "https://robo-prompt.vercel.app/", label: t("tryIt"), external: true },
       ]
     : isFtc
       ? [
