@@ -21,9 +21,9 @@ export default function FtcIntroPage() {
             <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">{t("fiTitle")}</h1>
             <p className="mt-4 text-white/60">{t("fiLead")}</p>
           </div>
-          <Link href="/ftc/simulator?level=beginner" className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-[#061014] transition-colors hover:bg-cyan-300">
+          <a href="https://gcet-gold.vercel.app/" target="_blank" rel="noopener noreferrer" className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-[#061014] transition-colors hover:bg-cyan-300">
             {t("fiOpenSim")} →
-          </Link>
+          </a>
         </div>
 
         <div className="mt-10 rounded-r-2xl border-l-4 border-cyan-400 bg-cyan-400/10 p-6">
@@ -88,9 +88,9 @@ export default function FtcIntroPage() {
         <p className="mt-6 text-sm text-white/40">{t("fiNote")}</p>
 
         <div className="mt-10 flex flex-wrap gap-3">
-          <Link href="/ftc/simulator?level=beginner" className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-[#061014] transition-colors hover:bg-cyan-300">
+          <a href="https://gcet-gold.vercel.app/" target="_blank" rel="noopener noreferrer" className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-[#061014] transition-colors hover:bg-cyan-300">
             {t("fiOpenSim")} →
-          </Link>
+          </a>
           <Link href="/ftc/tutorial" className="rounded-lg border border-cyan-400/40 px-5 py-3 font-semibold text-cyan-300 transition-colors hover:bg-cyan-400/10">
             {t("fiSeeTutorial")}
           </Link>

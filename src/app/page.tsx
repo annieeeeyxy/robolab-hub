@@ -48,7 +48,8 @@ export default function HubHome() {
       features: [t("hfFeat1"), t("hfFeat2"), t("hfFeat3")],
       intro: "/ftc/intro",
       demo: "/ftc/tutorial",
-      tryIt: "/ftc/simulator?level=beginner",
+      tryIt: "https://gcet-gold.vercel.app/",
+      external: true,
     },
   ];
 
@@ -90,9 +91,20 @@ export default function HubHome() {
                 <Link href={product.demo} className={`flex-1 rounded border-[1.5px] px-4 py-3 text-center font-mono text-sm font-bold ${style.ghost}`}>
                   {t("navDemo")}
                 </Link>
-                <Link href={product.tryIt} className={`flex-1 rounded border-[1.5px] border-transparent px-4 py-3 text-center font-mono text-sm font-bold ${style.solid}`}>
-                  {t("tryIt")} →
-                </Link>
+                {"external" in product && product.external ? (
+                  <a
+                    href={product.tryIt}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`flex-1 rounded border-[1.5px] border-transparent px-4 py-3 text-center font-mono text-sm font-bold ${style.solid}`}
+                  >
+                    {t("tryIt")} ↗
+                  </a>
+                ) : (
+                  <Link href={product.tryIt} className={`flex-1 rounded border-[1.5px] border-transparent px-4 py-3 text-center font-mono text-sm font-bold ${style.solid}`}>
+                    {t("tryIt")} →
+                  </Link>
+                )}
               </div>
             </article>
           );
