@@ -1,104 +1,138 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useTranslation } from "@/hooks/useTranslation";
+import { MEMBERS } from "@/content/members";
 
 const productStyles = {
   prompt: {
-    border: "border-pink-400/20 hover:border-pink-300/45",
-    glow: "from-pink-500/16 via-transparent to-transparent",
-    badge: "bg-pink-400/10 text-pink-300 ring-pink-300/20",
-    icon: "bg-gradient-to-br from-pink-300 to-rose-500 text-[#200812]",
-    arrow: "text-pink-300",
+    top: "border-t-pink-400",
+    eyebrow: "text-pink-300",
+    bullet: "text-pink-300",
+    solid: "bg-pink-400 text-[#200812] hover:bg-pink-300",
+    ghost: "border-pink-400/40 text-pink-300 hover:bg-pink-400/10",
   },
   ftc: {
-    border: "border-cyan-400/20 hover:border-cyan-300/45",
-    glow: "from-cyan-500/16 via-transparent to-transparent",
-    badge: "bg-cyan-400/10 text-cyan-300 ring-cyan-300/20",
-    icon: "bg-gradient-to-br from-cyan-300 to-blue-500 text-[#061014]",
-    arrow: "text-cyan-300",
+    top: "border-t-blue-400",
+    eyebrow: "text-blue-300",
+    bullet: "text-blue-300",
+    solid: "bg-blue-400 text-[#061014] hover:bg-blue-300",
+    ghost: "border-blue-400/40 text-blue-300 hover:bg-blue-400/10",
   },
 };
 
+const avatarColors = ["bg-pink-400", "bg-blue-400"];
+
 export default function HubHome() {
   const { t } = useTranslation();
+
   const products = [
     {
       id: "prompt" as const,
       title: "RoboPrompt",
-      kicker: t("hubPromptKicker"),
-      description: t("hubPromptDescription"),
-      bullets: [t("hubPromptBullet1"), t("hubPromptBullet2"), t("hubPromptBullet3")],
-      cta: t("hubPromptCta"),
-      href: "/roboprompt",
-      symbol: "P",
+      eyebrow: t("hpEyebrow"),
+      lede: t("hpLede"),
+      description: t("hpDesc"),
+      features: [t("hpFeat1"), t("hpFeat2"), t("hpFeat3")],
+      intro: "/roboprompt/about",
+      demo: "/roboprompt/tutorial",
+      tryIt: "/roboprompt/try",
     },
     {
       id: "ftc" as const,
       title: "RoboLab FTC",
-      kicker: t("hubFtcKicker"),
-      description: t("hubFtcDescription"),
-      bullets: [t("hubFtcBullet1"), t("hubFtcBullet2"), t("hubFtcBullet3")],
-      cta: t("hubFtcCta"),
-      href: "/ftc",
-      symbol: "F",
+      eyebrow: t("hfEyebrow"),
+      lede: t("hfLede"),
+      description: t("hfDesc"),
+      features: [t("hfFeat1"), t("hfFeat2"), t("hfFeat3")],
+      intro: "/ftc/intro",
+      demo: "/ftc/tutorial",
+      tryIt: "/ftc/simulator?level=beginner",
     },
   ];
 
   return (
-    <main className="relative flex-1 overflow-hidden bg-[#070a0f] text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.025)_1px,transparent_1px)] bg-[size:48px_48px]" />
-      <div className="pointer-events-none absolute left-1/2 top-0 h-[38rem] w-[70rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(34,211,238,.12),transparent_62%)]" />
-
-      <section className="relative mx-auto max-w-7xl px-5 pb-14 pt-20 text-center sm:px-8 sm:pt-28">
-        <p className="mx-auto mb-6 w-fit rounded-full border border-cyan-300/15 bg-cyan-300/5 px-4 py-2 font-mono text-[10px] tracking-[.2em] text-cyan-200/80">
-          {t("hubBadge")}
-        </p>
-        <h1 className="mx-auto max-w-4xl text-balance text-5xl font-semibold leading-[.98] tracking-[-.055em] sm:text-7xl">
-          {t("hubTitle")}
+    <main className="flex-1 bg-[#0b0c10] text-white">
+      {/* Hero */}
+      <section className="mx-auto max-w-5xl px-5 pb-12 pt-16 sm:px-8">
+        <p className="font-mono text-[11px] uppercase tracking-[.2em] text-white/45">{t("hhEyebrow")}</p>
+        <h1 className="mt-4 max-w-3xl text-balance text-4xl font-extrabold leading-[1.08] tracking-[-.025em] sm:text-5xl">
+          {t("hhTitle1Pre")} <span className="text-pink-400">{t("hhTitle1Hl")}</span> {t("hhTitle1Post")}
+          <br />
+          {t("hhTitle2Pre")} <span className="text-blue-400">{t("hhTitle2Hl")}</span> {t("hhTitle2Post")}
         </h1>
-        <p className="mx-auto mt-7 max-w-2xl text-balance text-base leading-7 text-white/55 sm:text-lg">
-          {t("hubLead")}
-        </p>
-        <a href="#products" className="mt-9 inline-flex items-center gap-3 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#070a0f] transition-transform hover:-translate-y-0.5">
-          {t("hubExplore")} <span>↓</span>
-        </a>
+        <p className="mt-5 max-w-3xl leading-7 text-white/55">{t("hhLead")}</p>
       </section>
 
-      <section id="products" className="relative mx-auto max-w-7xl px-5 pb-20 sm:px-8">
-        <p className="mb-7 text-center text-sm text-white/38">{t("hubChoose")}</p>
-        <div className="grid gap-5 lg:grid-cols-2">
-          {products.map((product) => {
-            const style = productStyles[product.id];
-            return (
-              <Link key={product.id} href={product.href} className={`group relative overflow-hidden rounded-3xl border bg-[#0c1118] p-7 transition-all duration-300 hover:-translate-y-1 sm:p-10 ${style.border}`}>
-                <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br opacity-70 ${style.glow}`} />
-                <div className="relative">
-                  <div className="flex items-center justify-between gap-5">
-                    <span className={`grid h-12 w-12 place-items-center rounded-2xl text-lg font-black shadow-xl ${style.icon}`}>{product.symbol}</span>
-                    <span className={`rounded-full px-3 py-1.5 font-mono text-[9px] tracking-[.12em] ring-1 ${style.badge}`}>{product.kicker}</span>
-                  </div>
-                  <h2 className="mt-12 text-3xl font-semibold tracking-[-.04em] sm:text-4xl">{product.title}</h2>
-                  <p className="mt-4 max-w-xl text-sm leading-6 text-white/55 sm:text-base">{product.description}</p>
-                  <ul className="mt-8 grid gap-3 text-sm text-white/72">
-                    {product.bullets.map((bullet) => <li key={bullet} className="flex items-center gap-3"><span className={style.arrow}>✓</span>{bullet}</li>)}
-                  </ul>
-                  <div className="mt-10 flex items-center justify-between border-t border-white/8 pt-6 text-sm font-semibold">
-                    <span>{product.cta}</span><span className={`text-xl transition-transform group-hover:translate-x-1 ${style.arrow}`}>→</span>
-                  </div>
-                </div>
+      {/* Two product blocks */}
+      <section className="mx-auto grid max-w-5xl gap-6 px-5 pb-16 sm:px-8 lg:grid-cols-2">
+        {products.map((product) => {
+          const style = productStyles[product.id];
+          return (
+            <article key={product.id} className={`flex flex-col gap-4 rounded-lg border border-white/10 border-t-4 bg-white/[.03] p-7 ${style.top}`}>
+              <p className={`font-mono text-[11px] font-bold uppercase tracking-[.16em] ${style.eyebrow}`}>{product.eyebrow}</p>
+              <h2 className="text-3xl font-extrabold tracking-[-.02em]">{product.title}</h2>
+              <p className="font-medium">{product.lede}</p>
+              <p className="text-sm leading-6 text-white/55">{product.description}</p>
+              <ul className="grid gap-2">
+                {product.features.map((feature) => (
+                  <li key={feature} className="flex gap-3 text-sm text-white/60">
+                    <span className={style.bullet}>▸</span>
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-auto flex flex-wrap gap-3 pt-3">
+                <Link href={product.intro} className={`flex-1 rounded border-[1.5px] px-4 py-3 text-center font-mono text-sm font-bold ${style.ghost}`}>
+                  {t("navIntro")}
+                </Link>
+                <Link href={product.demo} className={`flex-1 rounded border-[1.5px] px-4 py-3 text-center font-mono text-sm font-bold ${style.ghost}`}>
+                  {t("navDemo")}
+                </Link>
+                <Link href={product.tryIt} className={`flex-1 rounded border-[1.5px] border-transparent px-4 py-3 text-center font-mono text-sm font-bold ${style.solid}`}>
+                  {t("tryIt")} →
+                </Link>
+              </div>
+            </article>
+          );
+        })}
+      </section>
+
+      {/* Members */}
+      <section className="border-t border-white/10">
+        <div className="mx-auto max-w-5xl px-5 py-14 sm:px-8">
+          <h2 className="text-2xl font-extrabold tracking-[-.02em] sm:text-3xl">{t("members")}</h2>
+          <p className="mt-1 text-white/55">{t("hhMembersSub")}</p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {MEMBERS.map((member, index) => (
+              <Link
+                key={member.slug}
+                href={`/roboprompt/members/${member.slug}`}
+                className="flex items-center gap-4 rounded-lg border border-white/10 bg-white/[.03] px-5 py-4 transition-colors hover:border-white/30 hover:bg-white/[.06]"
+              >
+                {member.photo ? (
+                  <Image src={member.photo} alt="" width={44} height={44} className="h-11 w-11 rounded-full object-cover" />
+                ) : (
+                  <span className={`flex h-11 w-11 items-center justify-center rounded-full font-mono text-sm font-bold text-white ${avatarColors[index % 2]}`}>
+                    {member.name.split(" ").map((part) => part[0]).join("").toUpperCase()}
+                  </span>
+                )}
+                <span className="flex-1 font-semibold">{member.name}</span>
+                <span className="font-mono text-white/40">›</span>
               </Link>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="relative border-t border-white/8 bg-white/[.015]">
-        <div className="mx-auto grid max-w-7xl gap-7 px-5 py-14 sm:px-8 md:grid-cols-[1fr_auto] md:items-center">
+      {/* Language strip */}
+      <section className="border-t border-white/10 bg-white/[.015]">
+        <div className="mx-auto grid max-w-5xl gap-6 px-5 py-12 sm:px-8 md:grid-cols-[1fr_auto] md:items-center">
           <div>
-            <p className="font-mono text-[10px] tracking-[.18em] text-cyan-300/70">{t("hubLanguageKicker")}</p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-[-.035em]">{t("hubLanguageTitle")}</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/48">{t("hubLanguageDescription")}</p>
+            <p className="font-mono text-[10px] uppercase tracking-[.18em] text-white/45">{t("hubLanguageKicker")}</p>
+            <h2 className="mt-3 text-xl font-bold tracking-[-.02em]">{t("hubLanguageTitle")}</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-white/50">{t("hubLanguageDescription")}</p>
           </div>
           <p className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-xs text-white/65">{t("hubLanguageSupported")}</p>
         </div>

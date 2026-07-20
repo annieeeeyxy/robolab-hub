@@ -7,6 +7,8 @@ export type Member = {
   github?: string;
   email?: string;
   wechatQr?: string;
+  website?: string;
+  discord?: string;
 };
 
 // Add more entries here if others join the project later.
@@ -31,15 +33,25 @@ export const MEMBERS: Member[] = [
     slug: "matt-beitler",
     name: "Matt Beitler",
     role: "Team Member",
+    website: "https://www.mattbeitler.com/",
   },
   {
     slug: "pearson-wu",
     name: "Pearson Wu",
     role: "Team Member",
+    website: "https://pinsong.me/",
   },
   {
     slug: "james-yang",
     name: "James Yang",
     role: "Team Member",
+  },
+  {
+    slug: "bob67",
+    name: "bob67",
+    role: "Community",
+    bio: "Thank you for sharing our project and asking for advice in the FTC Discord!",
+    photo: "/bob67.png",
+    discord: "bob67987",
   },
 ];

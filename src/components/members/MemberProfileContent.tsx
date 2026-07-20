@@ -45,14 +45,29 @@ export function MemberProfileContent({ member }: { member: Member }) {
         <div>
           <h1 className="text-xl font-semibold">{member.name}</h1>
           <p className="text-sm text-black/50 dark:text-white/50">{role}</p>
+          {member.discord && (
+            <p className="mt-1 font-mono text-xs lowercase text-black/40 dark:text-white/40">
+              discord username: {member.discord}
+            </p>
+          )}
         </div>
         {bio && (
           <p className="max-w-md text-sm text-black/60 dark:text-white/60">{bio}</p>
         )}
       </div>
 
-      {(member.github || member.email) && (
+      {(member.github || member.email || member.website) && (
         <div className="flex justify-center gap-3">
+          {member.website && (
+            <a
+              href={member.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full border border-black/15 px-4 py-2 text-sm font-medium transition-colors hover:border-black/30 dark:border-white/15 dark:hover:border-white/30"
+            >
+              {member.website.replace(/^https?:\/\//, "").replace(/\/$/, "")} ↗
+            </a>
+          )}
           {member.github && (
             <a
               href={`https://github.com/${member.github}`}
