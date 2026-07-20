@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useTranslation } from "@/hooks/useTranslation";
 import { MEMBERS } from "@/content/members";
 
@@ -11,14 +10,12 @@ const productStyles = {
     eyebrow: "text-pink-300",
     bullet: "text-pink-300",
     solid: "bg-pink-400 text-[#200812] hover:bg-pink-300",
-    ghost: "border-pink-400/40 text-pink-300 hover:bg-pink-400/10",
   },
   ftc: {
     top: "border-t-blue-400",
     eyebrow: "text-blue-300",
     bullet: "text-blue-300",
     solid: "bg-blue-400 text-[#061014] hover:bg-blue-300",
-    ghost: "border-blue-400/40 text-blue-300 hover:bg-blue-400/10",
   },
 };
 
@@ -26,7 +23,6 @@ const avatarColors = ["bg-pink-400", "bg-blue-400"];
 
 export default function HubHome() {
   const { t } = useTranslation();
-
   const products = [
     {
       id: "prompt" as const,
@@ -35,10 +31,8 @@ export default function HubHome() {
       lede: t("hpLede"),
       description: t("hpDesc"),
       features: [t("hpFeat1"), t("hpFeat2"), t("hpFeat3")],
-      intro: "/roboprompt/about",
-      demo: "/roboprompt/tutorial",
-      tryIt: "https://robo-prompt.vercel.app/",
-      external: true,
+      href: "/prompt",
+      cta: t("hubPromptCta"),
     },
     {
       id: "ftc" as const,
@@ -47,16 +41,13 @@ export default function HubHome() {
       lede: t("hfLede"),
       description: t("hfDesc"),
       features: [t("hfFeat1"), t("hfFeat2"), t("hfFeat3")],
-      intro: "/ftc/intro",
-      demo: "/ftc/tutorial",
-      tryIt: "https://gcet-gold.vercel.app/",
-      external: true,
+      href: "/ftc",
+      cta: t("hubFtcCta"),
     },
   ];
 
   return (
     <main className="flex-1 bg-[#0b0c10] text-white">
-      {/* Hero */}
       <section className="mx-auto max-w-5xl px-5 pb-12 pt-16 sm:px-8">
         <p className="font-mono text-[11px] uppercase tracking-[.2em] text-white/45">{t("hhEyebrow")}</p>
         <h1 className="mt-4 max-w-3xl text-balance text-4xl font-extrabold leading-[1.08] tracking-[-.025em] sm:text-5xl">
@@ -67,7 +58,6 @@ export default function HubHome() {
         <p className="mt-5 max-w-3xl leading-7 text-white/55">{t("hhLead")}</p>
       </section>
 
-      {/* Two product blocks */}
       <section className="mx-auto grid max-w-5xl gap-6 px-5 pb-16 sm:px-8 lg:grid-cols-2">
         {products.map((product) => {
           const style = productStyles[product.id];
@@ -85,45 +75,21 @@ export default function HubHome() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-auto flex flex-wrap gap-3 pt-3">
-                <Link href={product.intro} className={`flex-1 rounded border-[1.5px] px-4 py-3 text-center font-mono text-sm font-bold ${style.ghost}`}>
-                  {t("navIntro")}
-                </Link>
-                <Link href={product.demo} className={`flex-1 rounded border-[1.5px] px-4 py-3 text-center font-mono text-sm font-bold ${style.ghost}`}>
-                  {t("navDemo")}
-                </Link>
-                {"external" in product && product.external ? (
-                  <a
-                    href={product.tryIt}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex-1 rounded border-[1.5px] border-transparent px-4 py-3 text-center font-mono text-sm font-bold ${style.solid}`}
-                  >
-                    {t("tryIt")} ↗
-                  </a>
-                ) : (
-                  <Link href={product.tryIt} className={`flex-1 rounded border-[1.5px] border-transparent px-4 py-3 text-center font-mono text-sm font-bold ${style.solid}`}>
-                    {t("tryIt")} →
-                  </Link>
-                )}
-              </div>
+              <a href={product.href} className={`mt-auto rounded border-[1.5px] border-transparent px-4 py-3 text-center font-mono text-sm font-bold ${style.solid}`}>
+                {product.cta} →
+              </a>
             </article>
           );
         })}
       </section>
 
-      {/* Members */}
-      <section className="border-t border-white/10">
+      <section id="team" className="border-t border-white/10">
         <div className="mx-auto max-w-5xl px-5 py-14 sm:px-8">
           <h2 className="text-2xl font-extrabold tracking-[-.02em] sm:text-3xl">{t("members")}</h2>
           <p className="mt-1 text-white/55">{t("hhMembersSub")}</p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {MEMBERS.map((member, index) => (
-              <Link
-                key={member.slug}
-                href={`/roboprompt/members/${member.slug}`}
-                className="flex items-center gap-4 rounded-lg border border-white/10 bg-white/[.03] px-5 py-4 transition-colors hover:border-white/30 hover:bg-white/[.06]"
-              >
+              <article key={member.slug} className="flex items-center gap-4 rounded-lg border border-white/10 bg-white/[.03] px-5 py-4">
                 {member.photo ? (
                   <Image src={member.photo} alt="" width={44} height={44} className="h-11 w-11 rounded-full object-cover" />
                 ) : (
@@ -132,14 +98,13 @@ export default function HubHome() {
                   </span>
                 )}
                 <span className="flex-1 font-semibold">{member.name}</span>
-                <span className="font-mono text-white/40">›</span>
-              </Link>
+                <span className="text-xs text-white/40">{member.role}</span>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Language strip */}
       <section className="border-t border-white/10 bg-white/[.015]">
         <div className="mx-auto grid max-w-5xl gap-6 px-5 py-12 sm:px-8 md:grid-cols-[1fr_auto] md:items-center">
           <div>

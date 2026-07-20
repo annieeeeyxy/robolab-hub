@@ -1,14 +1,12 @@
 # RoboLab Hub
 
-RoboLab Hub is a single Next.js application containing two robotics products:
+RoboLab Hub is the landing and routing application for `robo-labs.net`. The two products remain in separate repositories and deploy independently:
 
-- **RoboPrompt** (`/roboprompt`) turns robot-arm photos into targeted hardware questions, control plans, and downloadable starter code.
-- **RoboLab FTC** (`/ftc`) provides a 3D FTC simulator, telemetry, learning paths, and AI-assisted run analysis.
+- RoboLab Hub: `/`
+- RoboLab FTC: `/ftc`
+- RoboPrompt: `/prompt`
 
-The Hub owns the product navigation and language preference. English, Spanish,
-French, and Simplified Chinese are shared across the Hub, RoboPrompt, and
-RoboLab FTC. The selected language is saved in the browser and also controls the
-language used for AI-generated RoboPrompt documents and FTC feedback.
+The Hub does not contain either product implementation. Its Next.js rewrites proxy each product path to that product's own Vercel deployment while preserving the public `robo-labs.net` URL.
 
 ## Requirements
 
@@ -17,16 +15,12 @@ language used for AI-generated RoboPrompt documents and FTC feedback.
 
 ## Environment
 
-Copy `.env.example` to `.env.local` and configure the providers you use:
+Copy `.env.example` to `.env.local` when you need to override the child origins:
 
-- `ANTHROPIC_API_KEY`: RoboPrompt image analysis, interviews, plans, and code generation
-- `OPENAI_API_KEY`: RoboLab FTC telemetry analysis
-- `OPENAI_MODEL`: optional FTC analysis model override
-- `SITE_PASSWORD`: required in production to protect RoboPrompt's paid API routes
+- `ROBOLAB_FTC_ORIGIN`: FTC deployment origin, without a path or trailing slash
+- `ROBOPROMPT_ORIGIN`: RoboPrompt deployment origin, without a path or trailing slash
 
-```bash
-cp .env.example .env.local
-```
+The defaults point to the current production Vercel origins. Local multi-zone development can instead use origins such as `http://localhost:3001` and `http://localhost:3002`.
 
 ## Development
 
@@ -35,7 +29,7 @@ pnpm install
 pnpm dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:3000`. Requests under `/ftc/*` and `/prompt/*` are proxied to the configured child origins.
 
 ## Quality checks
 
@@ -46,21 +40,17 @@ pnpm test
 pnpm build
 ```
 
-The optional native dependencies in `package.json` keep the Three.js/Tailwind/
-Next.js build reproducible on Apple Silicon development machines and Linux
-deployment environments.
-
-## Main routes
-
-- `/`: Hub product chooser
-- `/roboprompt`: RoboPrompt overview
-- `/roboprompt/try`: photo-to-control-plan workflow
-- `/ftc`: FTC learning paths
-- `/ftc/simulator`: interactive simulator and telemetry
-- `/ftc/coach`: coach dashboard
-- `/ftc/student`: team-member dashboard
-
 ## Deployment
 
-The primary target is Vercel. Import the repository, add the environment
-variables above, and deploy as a standard Next.js App Router application.
+Deploy this repository as the root Vercel project and attach `robo-labs.net` only to this project. Configure the two origin variables in Vercel, then deploy FTC and RoboPrompt independently from their own repositories.
+
+The Hub rewrites:
+
+```text
+/ftc             -> ROBOLAB_FTC_ORIGIN/ftc
+/ftc/*           -> ROBOLAB_FTC_ORIGIN/ftc/*
+/prompt          -> ROBOPROMPT_ORIGIN/prompt
+/prompt/*        -> ROBOPROMPT_ORIGIN/prompt/*
+```
+
+Legacy `/roboprompt/*` and root product shortcuts redirect to the canonical paths.

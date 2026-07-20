@@ -2,17 +2,11 @@ import { describe, expect, it } from "vitest";
 import { getHubTranslation } from "../../src/lib/hubTranslations";
 
 describe("Hub translations", () => {
-  it("provides shared navigation and FTC controls in every supported language", () => {
-    expect(getHubTranslation("en", "ftcAddTelemetry")).toBe("Add telemetry");
-    expect(getHubTranslation("es", "ftcAddTelemetry")).toBe("Añadir telemetría");
-    expect(getHubTranslation("fr", "ftcAddTelemetry")).toBe("Ajouter une télémétrie");
-    expect(getHubTranslation("zh", "ftcAddTelemetry")).toBe("添加遥测");
-  });
-
-  it("localizes controls that are shared outside RoboPrompt", () => {
-    expect(getHubTranslation("es", "loginTitle")).toBe("Introduce la contraseña");
-    expect(getHubTranslation("fr", "ftcTimelineAria")).toBe("Chronologie de la simulation");
-    expect(getHubTranslation("zh", "ftcRobotConfigurationMissing")).toBe("缺少机器人配置");
+  it("provides Hub navigation in every supported language", () => {
+    expect(getHubTranslation("en", "hubPromptCta")).toBe("Open RoboPrompt");
+    expect(getHubTranslation("es", "hubPromptCta")).toBe("Abrir RoboPrompt");
+    expect(getHubTranslation("fr", "hubPromptCta")).toBe("Ouvrir RoboPrompt");
+    expect(getHubTranslation("zh", "hubPromptCta")).toBe("打开 RoboPrompt");
   });
 
   it("returns undefined for keys outside the Hub dictionary", () => {

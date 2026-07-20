@@ -1,17 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { HubLogo } from "./RobotLogo";
 
 export function NavBar() {
-  const pathname = usePathname();
   const { t } = useTranslation();
-
-  const isPrompt = pathname.startsWith("/roboprompt");
-  const isFtc = pathname.startsWith("/ftc");
 
   return (
     <header className="relative z-50 border-b border-white/10 bg-[#080b10]/95 text-white backdrop-blur-xl">
@@ -21,8 +16,8 @@ export function NavBar() {
           <span>Robo<b className="font-medium text-pink-400">Lab</b> <b className="font-medium text-blue-400">Hub</b></span>
         </Link>
         <div className="order-3 flex w-full items-center gap-1 overflow-x-auto sm:order-none sm:w-auto sm:flex-1">
-          <Link href="/roboprompt" className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm transition-colors ${isPrompt ? "bg-pink-400/15 text-pink-300" : "text-white/55 hover:bg-white/5 hover:text-white"}`}>{t("roboPrompt")}</Link>
-          <Link href="/ftc" className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm transition-colors ${isFtc ? "bg-cyan-400/15 text-cyan-300" : "text-white/55 hover:bg-white/5 hover:text-white"}`}>{t("roboLabFtc")}</Link>
+          <a href="/prompt" className="whitespace-nowrap rounded-full px-3 py-1.5 text-sm text-white/55 transition-colors hover:bg-white/5 hover:text-white">{t("roboPrompt")}</a>
+          <a href="/ftc" className="whitespace-nowrap rounded-full px-3 py-1.5 text-sm text-white/55 transition-colors hover:bg-white/5 hover:text-white">{t("roboLabFtc")}</a>
         </div>
         <LanguageSwitcher />
       </nav>
