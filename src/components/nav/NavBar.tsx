@@ -27,7 +27,7 @@ export function NavBar() {
           { href: "/ftc/intro", label: t("navIntro") },
           { href: "/ftc/tutorial", label: t("navTutorial") },
           { href: "/ftc/simulator?level=beginner", label: t("simulator") },
-          { href: "/ftc/coach", label: t("coach") },
+          { href: "https://gcet-gold.vercel.app/", label: t("navStart"), external: true },
           { href: "/ftc/student", label: t("teamMember") },
         ]
       : [];
@@ -45,6 +45,20 @@ export function NavBar() {
           {links.length > 0 && <span className="mx-2 h-4 w-px shrink-0 bg-white/10" />}
           <ul className="flex gap-1 text-sm">
             {links.map((link) => {
+              if ("external" in link && link.external) {
+                return (
+                  <li key={link.href}>
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-full px-3 py-1.5 text-white/45 transition-colors hover:bg-white/5 hover:text-white"
+                    >
+                      {link.label} ↗
+                    </a>
+                  </li>
+                );
+              }
               const cleanHref = link.href.split("?")[0];
               const isActive = cleanHref === "/roboprompt" || cleanHref === "/ftc"
                 ? pathname === cleanHref
