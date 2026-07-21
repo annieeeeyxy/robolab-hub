@@ -6,14 +6,43 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { HubLogo } from "./RobotLogo";
 
+/** How long the bar shows itself on arrival before folding away. */
+const AUTO_COLLAPSE_MS = 10_000;
+
 /**
- * The bar is hidden by default and drops down when the tab is clicked, so the
- * hero owns the whole viewport. It is `fixed` rather than in flow: sliding an
- * in-flow header would push the hero down every time it opened.
+ * The bar drops down from a tab at the top edge, so the hero can own the whole
+ * viewport. It is `fixed` rather than in flow: sliding an in-flow header would
+ * push the hero down every time it opened.
+ *
+ * It starts *open* and collapses itself, rather than starting closed. The tab
+ * alone is a small and easily missed target, so arriving with the bar shown is
+ * what makes the nav discoverable at all; collapsing it ten seconds later hands
+ * the viewport back to the hero without the visitor having to do anything.
+ *
+ * The timer is armed only while the bar is idle, which keeps it from ever
+ * closing out from under someone: pointing at the bar or tabbing into it
+ * cancels the countdown, and leaving restarts it from the top. Touching the tab
+ * is stronger still — an explicit open or close is the visitor taking control,
+ * after which the bar never moves on its own again.
+ *
+ * `useState(true)` is also what the server renders, so there is no first-paint
+ * flash and nothing to reconcile on hydration.
  */
 export function NavBar() {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
+  // Pointer is over the bar, or focus is somewhere inside it.
+  const [engaged, setEngaged] = useState(false);
+  // Disarmed for good once the visitor works the tab themselves.
+  const [autoCollapse, setAutoCollapse] = useState(true);
+
+  // Mounted once in the root layout, so this runs on arrival and not again on
+  // client-side navigation between pages.
+  useEffect(() => {
+    if (!autoCollapse || !open || engaged) return;
+    const timer = window.setTimeout(() => setOpen(false), AUTO_COLLAPSE_MS);
+    return () => window.clearTimeout(timer);
+  }, [autoCollapse, open, engaged]);
 
   // Escape closes it — the trigger is a small target and the panel covers the
   // top of the page while open.
@@ -34,6 +63,13 @@ export function NavBar() {
   return (
     <>
       <header
+        // Pointer and focus both count as using the bar, so the countdown is
+        // suspended for a visitor reading it and for one tabbing through it.
+        // Capture phase: focus and blur do not bubble.
+        onPointerEnter={() => setEngaged(true)}
+        onPointerLeave={() => setEngaged(false)}
+        onFocusCapture={() => setEngaged(true)}
+        onBlurCapture={() => setEngaged(false)}
         className={`fixed inset-x-0 top-0 z-50 border-b border-line bg-surface/95 text-foreground backdrop-blur-xl transition-transform duration-300 ease-out ${
           open ? "translate-y-0" : "-translate-y-full"
         }`}
@@ -70,7 +106,19 @@ export function NavBar() {
           behind the hidden panel: it is a sibling, not a child. */}
       <button
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          // An explicit open or close is the visitor taking the bar over; it
+          // must not fold away on its own afterwards.
+          setAutoCollapse(false);
+          setOpen((value) => !value);
+        }}
+        // The tab is a sibling of the panel, so it needs its own handlers.
+        // Without them the bar could fold away mid-reach, taking the tab from
+        // `top-16` to `top-0` just as the pointer arrived at it.
+        onPointerEnter={() => setEngaged(true)}
+        onPointerLeave={() => setEngaged(false)}
+        onFocusCapture={() => setEngaged(true)}
+        onBlurCapture={() => setEngaged(false)}
         aria-expanded={open}
         aria-label={open ? "Hide navigation" : "Show navigation"}
         className={`fixed left-1/2 z-[60] -translate-x-1/2 rounded-b-xl border border-t-0 border-line bg-surface/95 px-5 py-1.5 text-foreground shadow-lg backdrop-blur-xl transition-all duration-300 ease-out hover:bg-surface ${
