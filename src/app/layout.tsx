@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { NavBar } from "@/components/nav/NavBar";
 import { LanguageProvider } from "@/context/LanguageContext";
-import { ThemeProvider } from "@/context/ThemeContext";
 import "./globals.css";
 
 // Iosevka Custom — private build plan (term spacing, slab serifs, ss17-derived design).
@@ -28,30 +27,21 @@ export const metadata: Metadata = {
     "Build robot control plans with RoboPrompt and learn FTC programming in the RoboLab simulator.",
 };
 
-// Runs before paint to set the theme class, preventing a light/dark flash on load.
-const themeScript = `(function(){try{var k='robolab-hub-theme';var t=localStorage.getItem(k);if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';}var d=document.documentElement;d.classList.toggle('dark',t==='dark');d.style.colorScheme=t;}catch(e){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark';}})();`;
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={`${iosevka.variable} h-full antialiased`}
-    >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
+    // Dark-only: colorScheme is declared here so form controls, scrollbars and
+    // the like render dark from the first paint. There is no theme class to
+    // apply and so no pre-hydration script and no flash to guard against.
+    <html lang="en" className={`${iosevka.variable} h-full antialiased`} style={{ colorScheme: "dark" }}>
       <body className="min-h-full flex flex-col">
-        <ThemeProvider>
-          <LanguageProvider>
-            <NavBar />
-            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-          </LanguageProvider>
-        </ThemeProvider>
+        <LanguageProvider>
+          <NavBar />
+          <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+        </LanguageProvider>
       </body>
     </html>
   );

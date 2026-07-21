@@ -1,37 +1,23 @@
 @import "tailwindcss";
-@custom-variant dark (&:where(.dark, .dark *));
 
+/* The hub is dark-only. There is no light palette and no `dark:` variant — the
+   values below are the theme, not one half of a pair, so anything that needs a
+   colour reads a token rather than branching on a mode. */
 :root {
-  /* Light is the default theme */
-  --background: #ffffff;
-  --foreground: #14171d;
-  --brand: #db2777;
-
-  /* Shared shell tokens */
-  --page: #ffffff;        /* page background behind cards */
-  --surface: #ffffff;     /* card / nav surface */
-  --surface-2: #f1f3f7;   /* subtle inset surface */
-  --muted: #5b6673;       /* secondary text */
-  --line: #e3e6ec;        /* hairline borders */
-
-  /* One accent per product, everywhere */
-  --brand-prompt: #db2777; /* RoboPrompt = pink */
-  --brand-ftc: #0e7490;    /* RoboLab FTC = cyan */
-}
-
-.dark {
   --background: #0a0a0a;
   --foreground: #f5f5f5;
   --brand: #f472b6;
 
-  --page: #0b0c10;
-  --surface: #12151c;
-  --surface-2: #171b24;
-  --muted: #97a2ad;
-  --line: rgba(255, 255, 255, 0.1);
+  /* Shared shell tokens */
+  --page: #0b0c10;        /* page background behind cards */
+  --surface: #12151c;     /* card / nav surface */
+  --surface-2: #171b24;   /* subtle inset surface */
+  --muted: #97a2ad;       /* secondary text */
+  --line: rgba(255, 255, 255, 0.1); /* hairline borders */
 
-  --brand-prompt: #f472b6;
-  --brand-ftc: #22d3ee;
+  /* One accent per product, everywhere */
+  --brand-prompt: #f472b6; /* RoboPrompt = pink */
+  --brand-ftc: #22d3ee;    /* RoboLab FTC = cyan */
 }
 
 @theme inline {

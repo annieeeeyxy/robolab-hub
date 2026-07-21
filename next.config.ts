@@ -31,16 +31,17 @@ const nextConfig: NextConfig = {
     return [
       { source: "/roboprompt", destination: "/prompt", permanent: true },
       { source: "/roboprompt/tutorial", destination: "/prompt", permanent: true },
-      { source: "/roboprompt/members", destination: "/projects#team", permanent: true },
-      { source: "/roboprompt/members/:slug", destination: "/projects#team", permanent: true },
+      { source: "/roboprompt/members", destination: "/about#team", permanent: true },
+      { source: "/roboprompt/members/:slug", destination: "/about#team", permanent: true },
       { source: "/roboprompt/:path+", destination: "/prompt/:path+", permanent: true },
       { source: "/ftc/intro", destination: "/ftc", permanent: true },
       { source: "/ftc/tutorial", destination: "/ftc/learn", permanent: true },
       { source: "/try", destination: "/prompt/try", permanent: false },
-      { source: "/about", destination: "/prompt/about", permanent: false },
+      // `/about` is the hub's own About page now, so it is no longer forwarded to
+      // RoboPrompt's. That page is still reachable directly at /prompt/about.
       { source: "/diary", destination: "/prompt/diary", permanent: false },
-      { source: "/members", destination: "/projects#team", permanent: false },
-      { source: "/members/:slug", destination: "/projects#team", permanent: false },
+      { source: "/members", destination: "/about#team", permanent: false },
+      { source: "/members/:slug", destination: "/about#team", permanent: false },
       { source: "/simulator", destination: "/ftc/simulator", permanent: false },
       { source: "/coach", destination: "/ftc/coach", permanent: false },
       { source: "/student", destination: "/ftc/student", permanent: false },

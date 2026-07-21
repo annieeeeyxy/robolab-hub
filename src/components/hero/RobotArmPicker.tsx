@@ -1,20 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import ASCIIText from "@/components/ASCIIText";
 import SplitText from "@/components/SplitText";
 
 /**
- * Hero: a left-aligned game-style menu, with an orange robotic arm that reaches
- * across the screen and follows the cursor. Touch a menu entry with the gripper
- * and it closes on it — click to open.
+ * Hero: a left-aligned game-style menu of ASCII project names, with a pixelated
+ * robot arm that follows the cursor. Touch an entry with the gripper and it
+ * closes on it, revealing that project's description; click to open.
  *
- * Layout deliberately avoids flexbox and avoids computing any height budget. The
- * hero is a fixed, clipped box (see page.tsx), the menu is absolutely positioned,
- * and the SVG is `absolute inset-0` with NO viewBox — so one SVG user unit is one
- * CSS pixel and the arm shares a coordinate system with the DOM for free. Nothing
- * the arm draws can affect layout, so there is no feedback loop and nothing to
- * clip: the previous approach guessed the leftover height and got it wrong.
+ * Two invariants hold the whole thing together:
+ *
+ * 1. The SVG is `absolute inset-0` with NO viewBox, so one SVG user unit is one
+ *    CSS pixel and the arm shares a coordinate system with the DOM for free —
+ *    no aspect lock, no unit conversion, and nothing the arm draws can affect
+ *    layout.
+ * 2. Nothing revealed by a hover may resize an entry. The contact test reads
+ *    each entry's own box, so an entry that grew would move out from under the
+ *    gripper, close itself, and oscillate.
+ *
+ * Layout is absolutely positioned rather than flexed, and no height budget is
+ * computed anywhere; the hero is a fixed, clipped box (see page.tsx).
  */
 
 // Joints and the gripper are drawn at these design sizes and scaled; segment LENGTH
@@ -24,28 +31,124 @@ import SplitText from "@/components/SplitText";
 const DESIGN_JOINT = 19;
 const DESIGN_ELBOW = 14;
 const DESIGN_GRIP_T = 19;
-// Share of total arm length in the upper segment. Deliberately under half so the
-// first bone is the shorter one, which keeps the elbow well inside the frame
-// instead of pushing it out past the far edge.
-const SPLIT_UPPER = 0.46;
 
-// Fraction of the shoulder→farthest-corner distance the arm actually spans. At 1
-// it runs the full diagonal; below that it stays shorter and simply stops short
-// of the far corners.
-const REACH_SCALE = 0.82;
+// Four bones, i.e. two more joints than the original shoulder+elbow pair, so the
+// arm can curl through a shape rather than bending exactly once. Shares of the
+// total length, root first; they must sum to 1.
+const SEGMENT_SHARE = [0.3, 0.27, 0.23, 0.2];
 
-// Where the shoulder sits: off the bottom-right corner of the hero box, so the arm
-// emerges from off-canvas with no visible mount.
+// Fraction of the shoulder→farthest-corner distance the arm spans. Kept well
+// under 1: slack is spent sagging (see ARC_DEPTH), so a full-diagonal arm folds
+// away off the bottom edge instead of reading as an arm.
+const REACH_SCALE = 0.55;
+// The arm must always out-reach the menu even when REACH_SCALE would leave it
+// short, so entries are measured separately with their own headroom.
+const ITEM_REACH_HEADROOM = 1.14;
+
+// The shoulder is parked off the bottom-right corner, so the arm rises out of
+// frame with no visible mount or pedestal.
 const BASE_DROP = 40; // px past each edge, off-canvas
 const CONTACT_PAD = 12; // px of grace around a menu entry
 
-// Elbow orientation is a fixed constant. Deriving it from the side the hand is on
-// flips the IK solution at the centreline and mirrors the forearm — the "elbow
-// flip". With no branch, the solution is continuous and the flip cannot happen.
-const ELBOW_BEND = 1;
+// Thickness tracks length only weakly and is hard-capped, so a long reach stays
+// slender: scaling the arm uniformly to reach a far target would otherwise turn
+// it into a tree trunk. Tapers from root to tip.
+const ROOT_THICK = { ratio: 0.046, min: 14, max: 30 };
+const TIP_THICK = { ratio: 0.049, min: 11, max: 23 };
+
+// Anti-flip. A four-bone chain has no single analytic solution to pin, so the
+// solve is seeded from the base→target line with the free joints pushed straight
+// *down* by this share of the slack; the chain therefore always arcs downward.
+// The push is world-space +y, so there is no branch on which side the hand is
+// and no perpendicular whose sign could invert — the seed is a continuous
+// function of base and target, which makes the mirror-flip structurally
+// impossible rather than merely unlikely.
+//
+// Raising it deepens the curve, but the belly of the arc drops below the bottom
+// edge: the base sits in the corner, so there is little room underneath.
+const ARC_DEPTH = 0.36;
+const FABRIK_ITERATIONS = 10;
+
+type Point = { x: number; y: number };
+
+/**
+ * FABRIK: drag the chain's tip onto the target and its root back onto the base,
+ * alternately, until both hold. Two-bone IK had a closed form; four bones do
+ * not, and this converges in a handful of passes without any trigonometry.
+ *
+ * Re-seeded every frame rather than carried across them: a persistent bias
+ * saturates, spending all the slack on sag and folding the arm off-screen.
+ */
+function solveFabrik(points: Point[], lengths: number[], base: Point, target: Point) {
+  const n = lengths.length;
+  const span = lengths.reduce((sum, length) => sum + length, 0);
+
+  const dx = target.x - base.x;
+  const dy = target.y - base.y;
+  const distance = Math.hypot(dx, dy);
+
+  // Out of reach: there is nothing to solve, so lay the chain straight at it.
+  if (distance > span) {
+    const ux = dx / (distance || 1);
+    const uy = dy / (distance || 1);
+    points[0] = { ...base };
+    for (let i = 0; i < n; i++) {
+      points[i + 1] = {
+        x: points[i].x + ux * lengths[i],
+        y: points[i].y + uy * lengths[i],
+      };
+    }
+    return;
+  }
+
+  // Seed: the straight base→target line with the free joints pushed straight
+  // down by a share of the slack, so the passes below always converge onto the
+  // downward-arced solution.
+  const bulge = (span - distance) * ARC_DEPTH;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const sag = 4 * t * (1 - t); // 0 at both ends, 1 at the middle
+    points[i] = {
+      x: base.x + dx * t,
+      y: base.y + dy * t + bulge * sag,
+    };
+  }
+
+  for (let iteration = 0; iteration < FABRIK_ITERATIONS; iteration++) {
+    points[n] = { ...target };
+    for (let i = n - 1; i >= 0; i--) {
+      const d = Math.hypot(points[i + 1].x - points[i].x, points[i + 1].y - points[i].y) || 1e-6;
+      const r = lengths[i] / d;
+      points[i] = {
+        x: points[i + 1].x + (points[i].x - points[i + 1].x) * r,
+        y: points[i + 1].y + (points[i].y - points[i + 1].y) * r,
+      };
+    }
+
+    points[0] = { ...base };
+    for (let i = 0; i < n; i++) {
+      const d = Math.hypot(points[i + 1].x - points[i].x, points[i + 1].y - points[i].y) || 1e-6;
+      const r = lengths[i] / d;
+      points[i + 1] = {
+        x: points[i].x + (points[i + 1].x - points[i].x) * r,
+        y: points[i].y + (points[i + 1].y - points[i].y) * r,
+      };
+    }
+  }
+}
+
+// Each entry highlights in its own brand colour rather than a shared accent, so
+// the arm picking one reads as picking that product.
+const ACCENT: Record<TargetId, { border: string; text: string }> = {
+  prompt: { border: "border-prompt", text: "text-prompt" },
+  ftc: { border: "border-ftc", text: "text-ftc" },
+  about: { border: "border-foreground/70", text: "text-foreground" },
+};
+
+type TargetId = "prompt" | "ftc" | "about";
 
 type Target = {
-  id: "prompt" | "ftc";
+  id: TargetId;
   name: string;
   tagline: string;
   href: string;
@@ -112,32 +215,33 @@ function Joint({ radius }: { radius: number }) {
 
 export function RobotArmPicker({ targets, lockedLabel, title }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const upperRef = useRef<SVGGElement>(null);
-  const foreRef = useRef<SVGGElement>(null);
-  const elbowRef = useRef<SVGGElement>(null);
-  const shoulderRef = useRef<SVGGElement>(null);
   const handRef = useRef<SVGGElement>(null);
-  const upperBodyRef = useRef<SVGRectElement>(null);
-  const upperHiRef = useRef<SVGRectElement>(null);
-  const foreBodyRef = useRef<SVGRectElement>(null);
-  const foreHiRef = useRef<SVGRectElement>(null);
   const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  // One entry per bone / joint now that the chain is four links long.
+  const segRefs = useRef<(SVGGElement | null)[]>([]);
+  const segBodyRefs = useRef<(SVGRectElement | null)[]>([]);
+  const segHiRefs = useRef<(SVGRectElement | null)[]>([]);
+  const jointRefs = useRef<(SVGGElement | null)[]>([]);
+  // The solved chain: SEGMENT_SHARE.length + 1 points, base first, hand last.
+  const chain = useRef<Point[]>([]);
 
   // Kept in a ref so the animation effect never has to tear down and restart when
-  // the parent re-renders with a fresh array.
+  // the parent re-renders with a fresh array. Synced in an effect rather than
+  // assigned during render: a render can be thrown away or replayed, and a ref
+  // written there would keep a value the committed tree never had.
   const targetsRef = useRef(targets);
-  targetsRef.current = targets;
+  useEffect(() => {
+    targetsRef.current = targets;
+  }, [targets]);
 
   // Everything the animation loop needs, measured from real DOM boxes on resize
   // rather than recomputed per frame (no layout thrash, no guessed constants).
   const geom = useRef({
     left: 0,
     top: 0,
-    base: { x: 0, y: 0 },
-    upper: 0,
-    fore: 0,
-    shoulderScale: 1,
-    elbowScale: 1,
+    base: { x: 0, y: 0 } as Point,
+    lengths: [] as number[],
+    jointScales: [] as number[],
     handScale: 1,
     items: [] as ItemBox[],
   });
@@ -147,6 +251,9 @@ export function RobotArmPicker({ targets, lockedLabel, title }: Props) {
   const grip = useRef(0); // 0 = open, 1 = closed
   const [touched, setTouched] = useState<Target["id"] | null>(null);
   const touchedRef = useRef<Target["id"] | null>(null);
+  // The arm portals into <body>, which does not exist while server-rendering.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const measure = useCallback(() => {
     const el = containerRef.current;
@@ -154,7 +261,6 @@ export function RobotArmPicker({ targets, lockedLabel, title }: Props) {
     const rect = el.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return;
 
-    const base = { x: rect.width + BASE_DROP, y: rect.height + BASE_DROP };
     const items: ItemBox[] = [];
     for (const target of targetsRef.current) {
       const node = itemRefs.current[target.id];
@@ -169,41 +275,64 @@ export function RobotArmPicker({ targets, lockedLabel, title }: Props) {
       });
     }
 
+    // Off the bottom-right corner: out of frame, so the arm rises out of the
+    // corner with no mount or floor line to draw.
+    const base: Point = { x: rect.width + BASE_DROP, y: rect.height + BASE_DROP };
+
     // Span to the farthest corner, then scale down by REACH_SCALE. The arm still
-    // covers most of the box but no longer runs the full diagonal; the IK clamps
-    // the hand to the arm's span, so beyond that it simply points at the cursor
-    // instead of touching it.
+    // covers most of the box but no longer runs the full diagonal; beyond its
+    // span the chain simply lays out straight at the cursor instead of touching
+    // it. The menu is measured separately and always wins, so a REACH_SCALE that
+    // leaves the arm short of an entry can never break pinching.
     const corners = [
       { x: 0, y: 0 },
       { x: rect.width, y: 0 },
       { x: 0, y: rect.height },
       { x: rect.width, y: rect.height },
     ];
-    const total =
+    const cornerReach =
       corners.reduce(
         (max, point) => Math.max(max, Math.hypot(point.x - base.x, point.y - base.y)),
         0,
       ) * REACH_SCALE;
-    const upper = total * SPLIT_UPPER;
-    const fore = total * (1 - SPLIT_UPPER);
+    const itemReach =
+      items.reduce(
+        (max, item) => Math.max(max, Math.hypot(item.cx - base.x, item.cy - base.y)),
+        0,
+      ) * ITEM_REACH_HEADROOM;
+    const total = Math.max(cornerReach, itemReach);
 
-    // Thickness barely tracks length and is capped, so a long reach stays slender.
-    const upperT = clamp(upper * 0.1, 14, 30);
-    const foreT = clamp(fore * 0.09, 11, 23);
-    sizeSegment(upperBodyRef.current, upperHiRef.current, upper, upperT);
-    sizeSegment(foreBodyRef.current, foreHiRef.current, fore, foreT);
+    const rootT = clamp(total * ROOT_THICK.ratio, ROOT_THICK.min, ROOT_THICK.max);
+    const tipT = clamp(total * TIP_THICK.ratio, TIP_THICK.min, TIP_THICK.max);
+
+    const lengths = SEGMENT_SHARE.map((share) => total * share);
+    const jointScales: number[] = [];
+    lengths.forEach((length, i) => {
+      // Taper root → tip across the chain so it reads as an arm, not a worm.
+      const t = lengths.length > 1 ? i / (lengths.length - 1) : 0;
+      const thickness = rootT + (tipT - rootT) * t;
+      sizeSegment(segBodyRefs.current[i], segHiRefs.current[i], length, thickness);
+      jointScales.push((thickness * (i === 0 ? 0.78 : 0.92)) / (i === 0 ? DESIGN_JOINT : DESIGN_ELBOW));
+    });
 
     geom.current = {
       left: rect.left,
       top: rect.top,
       base,
-      upper,
-      fore,
-      shoulderScale: (upperT * 0.78) / DESIGN_JOINT,
-      elbowScale: (foreT * 0.92) / DESIGN_ELBOW,
-      handScale: foreT / DESIGN_GRIP_T,
+      lengths,
+      jointScales,
+      handScale: tipT / DESIGN_GRIP_T,
       items,
     };
+
+    // Seed the chain the first time so it starts already arced downward rather
+    // than snapping into shape on the first frame.
+    if (chain.current.length !== lengths.length + 1) {
+      chain.current = Array.from({ length: lengths.length + 1 }, (_, i) => ({
+        x: base.x + (total / lengths.length) * i,
+        y: base.y - (total / lengths.length) * i * 0.2,
+      }));
+    }
 
     if (current.current.x === 0 && current.current.y === 0) {
       const rest = { x: rect.width * 0.5, y: rect.height * 0.35 };
@@ -245,28 +374,22 @@ export function RobotArmPicker({ targets, lockedLabel, title }: Props) {
 
       const g = geom.current;
       // Hidden below `sm`, or not measured yet — nothing to solve for.
-      if (!g.upper || !containerRef.current?.offsetParent) return;
+      if (!g.lengths.length || !containerRef.current?.offsetParent) return;
 
       const ease = reduceMotion.matches ? 1 : 0.16;
       current.current.x += (desired.current.x - current.current.x) * ease;
       current.current.y += (desired.current.y - current.current.y) * ease;
 
-      // Two-bone inverse kinematics (law of cosines), all in CSS pixels.
-      const dx = current.current.x - g.base.x;
-      const dy = current.current.y - g.base.y;
-      const span = g.upper + g.fore;
-      const reach = clamp(Math.hypot(dx, dy), Math.abs(g.upper - g.fore) + 1, span - 1);
-      const toTarget = Math.atan2(dy, dx);
-      const shoulderOffset = Math.acos(
-        clamp((reach * reach + g.upper * g.upper - g.fore * g.fore) / (2 * reach * g.upper), -1, 1),
-      );
-      const shoulder = toTarget - ELBOW_BEND * shoulderOffset;
+      // Four-bone inverse kinematics, all in CSS pixels. Solved in place from
+      // last frame's pose, so the chain moves continuously.
+      const points = chain.current;
+      solveFabrik(points, g.lengths, g.base, current.current);
 
-      const elbowX = g.base.x + Math.cos(shoulder) * g.upper;
-      const elbowY = g.base.y + Math.sin(shoulder) * g.upper;
-      const handX = g.base.x + Math.cos(toTarget) * reach;
-      const handY = g.base.y + Math.sin(toTarget) * reach;
-      const wrist = Math.atan2(handY - elbowY, handX - elbowX);
+      const hand = points[points.length - 1];
+      const beforeHand = points[points.length - 2];
+      const handX = hand.x;
+      const handY = hand.y;
+      const wrist = Math.atan2(handY - beforeHand.y, handX - beforeHand.x);
 
       // Contact test against the menu entries' real boxes.
       const pad = CONTACT_PAD;
@@ -290,17 +413,18 @@ export function RobotArmPicker({ targets, lockedLabel, title }: Props) {
 
       grip.current += ((hit ? 1 : 0) - grip.current) * 0.25;
 
-      // Segments are already sized in pixels, so they only need placing and rotating.
-      shoulderRef.current?.setAttribute(
-        "transform",
-        `translate(${g.base.x} ${g.base.y}) scale(${g.shoulderScale})`,
-      );
-      upperRef.current?.setAttribute(
-        "transform",
-        `translate(${g.base.x} ${g.base.y}) rotate(${deg(shoulder)})`,
-      );
-      foreRef.current?.setAttribute("transform", `translate(${elbowX} ${elbowY}) rotate(${deg(wrist)})`);
-      elbowRef.current?.setAttribute("transform", `translate(${elbowX} ${elbowY}) scale(${g.elbowScale})`);
+      // Segments are already sized in pixels, so they only need placing and
+      // rotating along whatever the solver produced.
+      for (let i = 0; i < g.lengths.length; i++) {
+        const from = points[i];
+        const to = points[i + 1];
+        const angle = deg(Math.atan2(to.y - from.y, to.x - from.x));
+        segRefs.current[i]?.setAttribute("transform", `translate(${from.x} ${from.y}) rotate(${angle})`);
+        jointRefs.current[i]?.setAttribute(
+          "transform",
+          `translate(${from.x} ${from.y}) scale(${g.jointScales[i] ?? 1})`,
+        );
+      }
       handRef.current?.setAttribute(
         "transform",
         `translate(${handX} ${handY}) rotate(${deg(wrist)}) scale(${g.handScale})`,
@@ -325,6 +449,7 @@ export function RobotArmPicker({ targets, lockedLabel, title }: Props) {
   // the whole effect, so the title is just one string.
   const titleParts = [title.pre, title.highlight, title.post].map((part) => part.trim());
   const titleFlat = titleParts.filter(Boolean).join(" ");
+  const activeTarget = targets.find((target) => target.id === touched) ?? null;
   // Broken after the highlighted word: two roughly even lines keep the plane near
   // the container's aspect, so the glyphs stay large enough to read once asciified.
   const titleBlock = [
@@ -355,7 +480,7 @@ export function RobotArmPicker({ targets, lockedLabel, title }: Props) {
             >
               <span className="block text-2xl font-thin tracking-[-.01em]">{target.name}</span>
               <span className="mt-1 block text-sm leading-6 text-muted">{target.tagline}</span>
-              <span className="mt-2 block font-mono text-[10px] uppercase tracking-[.16em] text-orange-600 dark:text-orange-400">
+              <span className="mt-2 block font-mono text-[10px] uppercase tracking-[.16em] text-orange-600">
                 {lockedLabel} →
               </span>
             </a>
@@ -379,7 +504,6 @@ export function RobotArmPicker({ targets, lockedLabel, title }: Props) {
           <div className="relative ml-[23px] h-full">
             <ASCIIText
               text={titleBlock}
-              enableWaves={false}
               align="left"
               asciiFontSize={6}
               textFontSize={200}
@@ -405,8 +529,8 @@ export function RobotArmPicker({ targets, lockedLabel, title }: Props) {
                     const item = geom.current.items.find((entry) => entry.id === target.id);
                     if (item) desired.current = { x: item.cx, y: item.cy };
                   }}
-                  className={`relative block border-l-[3px] py-2 pl-5 transition-colors duration-200 ${index > 0 ? "mt-24" : ""} ${
-                    isTouched ? "border-orange-500" : "border-line/70 hover:border-orange-400/60"
+                  className={`relative block border-l-[3px] py-1 pl-5 transition-colors duration-200 ${index > 0 ? "mt-2" : ""} ${
+                    isTouched ? ACCENT[target.id].border : "border-line/70 hover:border-line"
                   }`}
                 >
                   {/* Project names get the same ASCII treatment as the title.
@@ -415,55 +539,71 @@ export function RobotArmPicker({ targets, lockedLabel, title }: Props) {
                   <div className="relative h-20 w-[22rem]">
                     <ASCIIText
                       text={target.name}
-                      enableWaves={false}
-                      align="left"
+                              align="left"
                       asciiFontSize={5}
                       textFontSize={200}
                       planeBaseHeight={20}
                     />
                   </div>
 
-                  {/* Mounted only once the gripper has pinched this entry, so the
-                      split-text animation replays on every pinch. Absolutely
-                      positioned directly below: the contact test reads the
-                      anchor's box, and letting this grow it would shove the entry
-                      out from under the gripper, close it, and oscillate. */}
-                  {isTouched && (
-                    <div className="absolute left-5 right-0 top-full pt-1">
-                      {/* threshold/rootMargin are pushed to "effectively always
-                          on": SplitText reveals via ScrollTrigger, but this hero
-                          never scrolls, and at the stock `top 90%-=100px` the
-                          lower entry sits past the start line and its text would
-                          stay stuck at opacity 0 forever. */}
-                      <SplitText
-                        key={target.id}
-                        text={target.tagline}
-                        tag="p"
-                        splitType="chars"
-                        textAlign="left"
-                        delay={12}
-                        duration={0.5}
-                        ease="power3.out"
-                        threshold={0.01}
-                        rootMargin="0px"
-                        from={{ opacity: 0, y: 14 }}
-                        to={{ opacity: 1, y: 0 }}
-                        className="max-w-md text-sm leading-6 text-muted"
-                      />
-                      <p className="mt-1 font-mono text-[10px] uppercase tracking-[.18em] text-orange-600 dark:text-orange-400">
-                        {lockedLabel} →
-                      </p>
-                    </div>
-                  )}
                 </a>
               );
             })}
           </div>
+
+          {/* One description slot under the whole stack rather than one per
+              entry. With the entries packed tight there is no room beneath any
+              single one, and a per-entry block would sit on top of the next
+              name. Height is reserved so revealing it never shifts the stack —
+              the entries above are the arm's contact targets. */}
+          <div className="mt-7 min-h-[5.5rem] pl-5">
+            {activeTarget && (
+              <>
+                {/* threshold/rootMargin are pushed to "effectively always on":
+                    SplitText reveals via ScrollTrigger, but this hero never
+                    scrolls, and at the stock `top 90%-=100px` anything low on
+                    the page stays stuck at opacity 0 forever. */}
+                <SplitText
+                  key={activeTarget.id}
+                  text={activeTarget.tagline}
+                  tag="p"
+                  splitType="chars"
+                  textAlign="left"
+                  delay={12}
+                  duration={0.5}
+                  ease="power3.out"
+                  threshold={0.01}
+                  rootMargin="0px"
+                  from={{ opacity: 0, y: 14 }}
+                  to={{ opacity: 1, y: 0 }}
+                  className="max-w-md text-sm leading-6 text-muted"
+                />
+                <p
+                  className={`mt-1 font-mono text-[10px] uppercase tracking-[.18em] ${ACCENT[activeTarget.id].text}`}
+                >
+                  {lockedLabel} →
+                </p>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* No viewBox: SVG user units are CSS pixels, shared with the DOM above.
-            Renders over the menu and passes clicks straight through to it. */}
-        <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
+        {/* Portaled to <body> so the arm draws over everything, the nav panel
+            included. It cannot simply take a high z-index in place: <main> is
+            `fixed`, which makes it a stacking context, and a child can never
+            escape its parent's. Raising <main> instead would lift the whole menu
+            over the nav and swallow it.
+
+            `fixed inset-0` keeps the coordinate system it had — the hero is also
+            fixed to the viewport, so the arm's pixels still line up with the
+            entries it hit-tests. No viewBox, so one SVG user unit is one CSS
+            pixel. `pointer-events-none` lets clicks through to the nav beneath. */}
+        {mounted &&
+          createPortal(
+            <svg
+              className="pointer-events-none fixed inset-0 z-[70] hidden h-full w-full sm:block"
+              aria-hidden="true"
+            >
           <defs>
             <linearGradient id="arm-steel" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#fdba74" />
@@ -499,22 +639,44 @@ export function RobotArmPicker({ targets, lockedLabel, title }: Props) {
           {/* One filter over the whole arm rather than per segment, so every
               piece lands on the same pixel grid. */}
           <g filter="url(#arm-pixelate)">
-          {/* Segment rects are sized in pixels by sizeSegment() on measure. */}
-          <g ref={upperRef}>
-            <rect ref={upperBodyRef} fill="url(#arm-steel)" stroke="#7c2d12" strokeWidth="1.5" />
-            <rect ref={upperHiRef} fill="#fed7aa" opacity="0.55" />
-          </g>
-          <g ref={foreRef}>
-            <rect ref={foreBodyRef} fill="url(#arm-steel)" stroke="#7c2d12" strokeWidth="1.5" />
-            <rect ref={foreHiRef} fill="#fed7aa" opacity="0.55" />
-          </g>
+          {/* Segment rects are sized in pixels by sizeSegment() on measure.
+              Bones first, then joints, so every pivot sits on top of the two
+              bones it connects. */}
+          {SEGMENT_SHARE.map((_, i) => (
+            <g
+              key={`bone-${i}`}
+              ref={(node) => {
+                segRefs.current[i] = node;
+              }}
+            >
+              <rect
+                ref={(node) => {
+                  segBodyRefs.current[i] = node;
+                }}
+                fill="url(#arm-steel)"
+                stroke="#7c2d12"
+                strokeWidth="1.5"
+              />
+              <rect
+                ref={(node) => {
+                  segHiRefs.current[i] = node;
+                }}
+                fill="#fed7aa"
+                opacity="0.55"
+              />
+            </g>
+          ))}
 
-          <g ref={shoulderRef}>
-            <Joint radius={DESIGN_JOINT} />
-          </g>
-          <g ref={elbowRef}>
-            <Joint radius={DESIGN_ELBOW} />
-          </g>
+          {SEGMENT_SHARE.map((_, i) => (
+            <g
+              key={`joint-${i}`}
+              ref={(node) => {
+                jointRefs.current[i] = node;
+              }}
+            >
+              <Joint radius={i === 0 ? DESIGN_JOINT : DESIGN_ELBOW} />
+            </g>
+          ))}
 
           {/* Gripper — claws pivot about the wrist origin so they stay attached. */}
           <g ref={handRef}>
@@ -540,7 +702,9 @@ export function RobotArmPicker({ targets, lockedLabel, title }: Props) {
             <circle r="6" fill="url(#joint-steel)" stroke="#7c2d12" strokeWidth="1.5" />
           </g>
           </g>
-        </svg>
+            </svg>,
+            document.body,
+          )}
       </div>
     </>
   );

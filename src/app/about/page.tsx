@@ -7,20 +7,20 @@ import { MEMBERS } from "@/content/members";
 
 const productStyles = {
   prompt: {
-    top: "border-t-pink-500 dark:border-t-pink-400",
-    eyebrow: "text-pink-600 dark:text-pink-300",
-    bullet: "text-pink-600 dark:text-pink-300",
-    solid: "bg-pink-600 text-white hover:bg-pink-500 dark:bg-pink-400 dark:text-[#200812] dark:hover:bg-pink-300",
+    top: "border-t-pink-500",
+    eyebrow: "text-pink-600",
+    bullet: "text-pink-600",
+    solid: "bg-pink-600 text-white hover:bg-pink-500",
   },
   ftc: {
-    top: "border-t-cyan-500 dark:border-t-cyan-400",
-    eyebrow: "text-cyan-700 dark:text-cyan-300",
-    bullet: "text-cyan-700 dark:text-cyan-300",
-    solid: "bg-cyan-600 text-white hover:bg-cyan-500 dark:bg-cyan-400 dark:text-[#061014] dark:hover:bg-cyan-300",
+    top: "border-t-cyan-500",
+    eyebrow: "text-cyan-700",
+    bullet: "text-cyan-700",
+    solid: "bg-cyan-600 text-white hover:bg-cyan-500",
   },
 };
 
-const avatarColors = ["bg-pink-500 dark:bg-pink-400", "bg-cyan-600 dark:bg-cyan-400"];
+const avatarColors = ["bg-pink-500", "bg-cyan-600"];
 
 export default function ProjectsPage() {
   const { t } = useTranslation();

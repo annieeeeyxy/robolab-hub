@@ -3,50 +3,57 @@ import * as THREE from 'three';
 
 const vertexShader = `
 varying vec2 vUv;
-uniform float uTime;
-uniform float mouse;
-uniform float uEnableWaves;
 
 void main() {
     vUv = uv;
-    float time = uTime * 5.;
-
-    float waveFactor = uEnableWaves;
-
-    vec3 transformed = position;
-
-    transformed.x += sin(time + position.y) * 0.5 * waveFactor;
-    transformed.y += cos(time + position.z) * 0.15 * waveFactor;
-    transformed.z += sin(time + position.x) * waveFactor;
-
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(transformed, 1.0);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 `;
 
+// The glitter: each colour channel samples the text texture at a slightly
+// different, time-varying offset, so the glyph edges shimmer through the brand
+// gradient the <pre> is painted with.
 const fragmentShader = `
 varying vec2 vUv;
-uniform float mouse;
-uniform float uTime;
 uniform sampler2D uTexture;
+uniform float uDrift;
+uniform float uTime;
+
+// RoboPrompt pink / RoboLab FTC cyan. The edge colour travels between them
+// rather than being one or the other, so the block reads as a spectrum.
+const vec3 PINK = vec3(0.957, 0.447, 0.714);
+const vec3 CYAN = vec3(0.133, 0.827, 0.933);
 
 void main() {
-    float time = uTime;
     vec2 pos = vUv;
-    
-    float move = sin(time + mouse) * 0.01;
-    float r = texture2D(uTexture, pos + cos(time * 2. - time + pos.x) * .01).r;
-    float g = texture2D(uTexture, pos + tan(time * .5 + pos.x - time) * .01).g;
-    float b = texture2D(uTexture, pos - cos(time * 2. + time + pos.y) * .01).b;
-    float a = texture2D(uTexture, pos).a;
-    gl_FragColor = vec4(r, g, b, a);
+
+    float core  = texture2D(uTexture, pos).a;
+    float left  = texture2D(uTexture, pos - vec2(uDrift, 0.0)).a;
+    float right = texture2D(uTexture, pos + vec2(uDrift, 0.0)).a;
+
+    // Edge masks rather than offset copies of the glyph: a pixel is on an edge
+    // where it is covered but its neighbour is not. Colour therefore lands *on*
+    // the character outline and the shape stays crisp — offsetting whole tinted
+    // copies is what produced the blurred double-image.
+    float edgeA = clamp(core - right, 0.0, 1.0);
+    float edgeB = clamp(core - left, 0.0, 1.0);
+
+    // Position along the pink↔cyan ramp, sweeping across the block and drifting
+    // over time, so opposite edges sit at opposite ends of the spectrum.
+    float t = 0.5 + 0.5 * sin(uTime * 0.9 + pos.x * 7.0);
+
+    vec3 col = vec3(core);
+    col = mix(col, mix(PINK, CYAN, t), edgeA);
+    col = mix(col, mix(CYAN, PINK, t), edgeB);
+
+    // Alpha is the glyph's own coverage: nothing is drawn outside the character.
+    gl_FragColor = vec4(col, core);
 }
 `;
 
-Math.map = function (n, start, stop, start2, stop2) {
-  return ((n - start) / (stop - start)) * (stop2 - start2) + start2;
-};
-
-const PX_RATIO = typeof window !== 'undefined' ? window.devicePixelRatio : 1;
+// Edge width, in pixels of the text texture (drawn at textFontSize). Small on
+// purpose: this is an outline, not a displacement.
+const FRINGE_PX = 2.5;
 
 // The ASCII grid only lines up if the glyphs are fixed-pitch: every row is a
 // plain string, so a proportional fallback makes each row drift and the block
@@ -78,7 +85,6 @@ class AsciiFilter {
     this.context = this.canvas.getContext('2d');
     this.domElement.appendChild(this.canvas);
 
-    this.deg = 0;
     this.invert = invert ?? true;
     this.fontSize = fontSize ?? 12;
     this.fontFamily = fontFamily ?? "'Courier New', monospace";
@@ -89,8 +95,6 @@ class AsciiFilter {
     this.context.msImageSmoothingEnabled = false;
     this.context.imageSmoothingEnabled = false;
 
-    this.onMouseMove = this.onMouseMove.bind(this);
-    document.addEventListener('mousemove', this.onMouseMove);
   }
 
   setSize(width, height) {
@@ -99,8 +103,6 @@ class AsciiFilter {
     this.renderer.setSize(width, height);
     this.reset();
 
-    this.center = { x: width / 2, y: height / 2 };
-    this.mouse = { x: this.center.x, y: this.center.y };
   }
 
   reset() {
@@ -121,8 +123,8 @@ class AsciiFilter {
     this.pre.style.left = '0';
     this.pre.style.top = '0';
     this.pre.style.zIndex = '9';
-    this.pre.style.backgroundAttachment = 'fixed';
-    this.pre.style.mixBlendMode = 'difference';
+
+    this.pre.style.mixBlendMode = 'normal';
   }
 
   render(scene, camera) {
@@ -136,26 +138,9 @@ class AsciiFilter {
     }
 
     this.asciify(this.context, w, h);
-    this.hue();
   }
 
-  onMouseMove(e) {
-    this.mouse = { x: e.clientX * PX_RATIO, y: e.clientY * PX_RATIO };
-  }
 
-  get dx() {
-    return this.mouse.x - this.center.x;
-  }
-
-  get dy() {
-    return this.mouse.y - this.center.y;
-  }
-
-  hue() {
-    const deg = (Math.atan2(this.dy, this.dx) * 180) / Math.PI;
-    this.deg += (deg - this.deg) * 0.075;
-    this.domElement.style.filter = `hue-rotate(${this.deg.toFixed(1)}deg)`;
-  }
 
   asciify(ctx, w, h) {
     if (w && h) {
@@ -182,9 +167,7 @@ class AsciiFilter {
     }
   }
 
-  dispose() {
-    document.removeEventListener('mousemove', this.onMouseMove);
-  }
+  dispose() {}
 }
 
 class CanvasTxt {
@@ -221,9 +204,18 @@ class CanvasTxt {
     this.canvas.height = textHeight;
   }
 
+  // Roughly equal luminance across the ramp, so character density stays even
+  // along the text instead of thinning out at one end.
+  get fillStyle() {
+    if (!Array.isArray(this.color)) return this.color;
+    const gradient = this.context.createLinearGradient(0, 0, this.canvas.width, 0);
+    this.color.forEach((stop, i) => gradient.addColorStop(i / (this.color.length - 1), stop));
+    return gradient;
+  }
+
   render() {
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.context.fillStyle = this.color;
+    this.context.fillStyle = this.fillStyle;
     this.context.font = this.font;
     this.context.textBaseline = 'alphabetic';
 
@@ -252,7 +244,7 @@ class CanvasTxt {
 
 class CanvAscii {
   constructor(
-    { text, asciiFontSize, textFontSize, textColor, planeBaseHeight, enableWaves, align },
+    { text, asciiFontSize, textFontSize, textColor, planeBaseHeight, align },
     containerElem,
     width,
     height
@@ -265,16 +257,13 @@ class CanvAscii {
     this.container = containerElem;
     this.width = width;
     this.height = height;
-    this.enableWaves = enableWaves;
     this.align = align;
 
     this.camera = new THREE.PerspectiveCamera(45, this.width / this.height, 1, 1000);
     this.camera.position.z = 30;
 
     this.scene = new THREE.Scene();
-    this.mouse = { x: this.width / 2, y: this.height / 2 };
 
-    this.onMouseMove = this.onMouseMove.bind(this);
   }
 
   async init() {
@@ -315,9 +304,10 @@ class CanvAscii {
       transparent: true,
       uniforms: {
         uTime: { value: 0 },
-        mouse: { value: 1.0 },
+        // Constant fringe width in texture pixels, so every block fringes the
+        // same amount relative to its glyphs regardless of how wide it is.
+        uDrift: { value: FRINGE_PX / this.textCanvas.width },
         uTexture: { value: this.texture },
-        uEnableWaves: { value: this.enableWaves ? 1.0 : 0.0 }
       }
     });
 
@@ -356,8 +346,6 @@ class CanvAscii {
     this.container.appendChild(this.filter.domElement);
     this.setSize(this.width, this.height);
 
-    this.container.addEventListener('mousemove', this.onMouseMove);
-    this.container.addEventListener('touchmove', this.onMouseMove);
   }
 
   setSize(w, h) {
@@ -371,38 +359,26 @@ class CanvAscii {
     this.updateAlignment();
 
     this.filter.setSize(w, h);
+    if (this.mesh) this.render();
 
-    this.center = { x: w / 2, y: h / 2 };
   }
 
   load() {
     this.animate();
   }
 
-  onMouseMove(evt) {
-    const e = evt.touches ? evt.touches[0] : evt;
-    const bounds = this.container.getBoundingClientRect();
-    const x = e.clientX - bounds.left;
-    const y = e.clientY - bounds.top;
-    this.mouse = { x, y };
-  }
-
   animate() {
-    const animateFrame = () => {
-      this.animationFrameId = requestAnimationFrame(animateFrame);
+    const frame = () => {
+      this.animationFrameId = requestAnimationFrame(frame);
       this.render();
     };
-    animateFrame();
+    frame();
   }
 
   render() {
-    const time = new Date().getTime() * 0.001;
-
-    this.textCanvas.render();
-    this.texture.needsUpdate = true;
-
-    this.mesh.material.uniforms.uTime.value = Math.sin(time);
-
+    // The text itself never changes, so the texture is uploaded once at setup;
+    // only the shader clock advances per frame.
+    this.mesh.material.uniforms.uTime.value = performance.now() * 0.001;
     this.updateRotation();
     this.filter.render(this.scene, this.camera);
   }
@@ -438,8 +414,6 @@ class CanvAscii {
         this.container.removeChild(this.filter.domElement);
       }
     }
-    this.container.removeEventListener('mousemove', this.onMouseMove);
-    this.container.removeEventListener('touchmove', this.onMouseMove);
     this.clear();
     if (this.renderer) {
       this.renderer.dispose();
@@ -452,9 +426,8 @@ export default function ASCIIText({
   text = 'David!',
   asciiFontSize = 8,
   textFontSize = 200,
-  textColor = '#fdf9f3',
+  textColor = '#ffffff',
   planeBaseHeight = 8,
-  enableWaves = true,
   align = 'center'
 }) {
   const containerRef = useRef(null);
@@ -469,7 +442,7 @@ export default function ASCIIText({
 
     const createAndInit = async (container, w, h) => {
       const instance = new CanvAscii(
-        { text, asciiFontSize, textFontSize, textColor, planeBaseHeight, enableWaves, align },
+        { text, asciiFontSize, textFontSize, textColor, planeBaseHeight, align },
         container,
         w,
         h
@@ -530,7 +503,7 @@ export default function ASCIIText({
         asciiRef.current = null;
       }
     };
-  }, [text, asciiFontSize, textFontSize, textColor, planeBaseHeight, enableWaves, align]);
+  }, [text, asciiFontSize, textFontSize, textColor, planeBaseHeight, align]);
 
   return (
     <div
@@ -567,12 +540,12 @@ export default function ASCIIText({
           position: absolute;
           left: 0;
           top: 0;
-          background-image: radial-gradient(circle, #ff6188 0%, #fc9867 50%, #ffd866 100%);
-          background-attachment: fixed;
-          -webkit-text-fill-color: transparent;
-          -webkit-background-clip: text;
+          /* White is the type. The brand colours sit either side of it as a
+             two-tone shadow, matching the shader's fringe underneath. */
+          color: #ffffff;
+          text-shadow: -1px 0 rgba(34, 211, 238, 0.7), 1px 0 rgba(244, 114, 182, 0.7);
           z-index: 9;
-          mix-blend-mode: difference;
+          mix-blend-mode: normal;
         }
       `}</style>
     </div>
